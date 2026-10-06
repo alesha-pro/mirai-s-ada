@@ -1,0 +1,36 @@
+=== E21 2026-10-06 09:32 engine a881e4277 layer 07f389d
+--- (a) coding x12, medium, finish_note off 09:32
+reasoning-effort-allow medium
+{"family": "coding", "name": "suite-tar-01", "seed": 1, "arm": "mirai-layer", "ok": true, "tokens": 20593, "wall_s": 295.9, "detail": []}
+{"family": "coding", "name": "suite-tar-01", "seed": 2, "arm": "mirai-layer", "ok": false, "tokens": 39405, "wall_s": 581.5, "detail": ["hidden1:invalid_tar", "hidden2:invalid_tar"]}
+{"family": "coding", "name": "suite-tar-01", "seed": 3, "arm": "mirai-layer", "ok": false, "tokens": 7545, "wall_s": 119.0, "detail": ["hidden1:result_schema", "hidden2:result_schema"]}
+{"family": "coding", "name": "suite-tar-01", "seed": 4, "arm": "mirai-layer", "ok": false, "tokens": 10351, "wall_s": 159.1, "detail": ["hidden1:result_schema", "hidden2:result_schema"]}
+{"family": "coding", "name": "xfer-zip-01", "seed": 1, "arm": "mirai-layer", "ok": true, "tokens": 17433, "wall_s": 262.3, "detail": []}
+{"family": "coding", "name": "xfer-zip-01", "seed": 2, "arm": "mirai-layer", "ok": true, "tokens": 17323, "wall_s": 252.8, "detail": []}
+{"family": "coding", "name": "xfer-zip-01", "seed": 3, "arm": "mirai-layer", "ok": false, "tokens": 12293, "wall_s": 182.8, "detail": ["hidden1:external_attr_mode", "hidden2:external_attr_mode"]}
+{"family": "coding", "name": "xfer-zip-01", "seed": 4, "arm": "mirai-layer", "ok": true, "tokens": 8581, "wall_s": 128.6, "detail": []}
+{"family": "coding", "name": "xfer-mime-01", "seed": 1, "arm": "mirai-layer", "ok": false, "tokens": 15780, "wall_s": 233.4, "detail": ["candidate_unavailable"]}
+{"family": "coding", "name": "xfer-mime-01", "seed": 2, "arm": "mirai-layer", "ok": false, "tokens": 26135, "wall_s": 390.9, "detail": ["hidden1:result_schema", "hidden2:line_too_long"]}
+{"family": "coding", "name": "xfer-mime-01", "seed": 3, "arm": "mirai-layer", "ok": false, "tokens": 24194, "wall_s": 364.3, "detail": ["hidden1:line_too_long", "hidden2:line_too_long", "hidden4:invalid_request_not_rejec
+{"family": "coding", "name": "xfer-mime-01", "seed": 4, "arm": "mirai-layer", "ok": false, "tokens": 34585, "wall_s": 542.7, "detail": ["hidden1:result_schema", "hidden2:unrecoverable_json"]}
+| coding | suite-tar-01 | 1/4 |
+| coding | xfer-mime-01 | 0/4 |
+| coding | xfer-zip-01 | 3/4 |
+| **total** | | **4/12** |
+completion tokens: mirai-layer 234,218
+| family | item | seed | E18-coding-layer mirai-raw | E18-coding-layer mirai-layer | E21a-coding-nofinish mirai-raw | E21a-coding-nofinish mirai-layer | moved |
+| run / arm | coding | total | tokens |
+--- (b) MIME x4, low, finish_note off, cards on 10:31
+=== product start 2026-10-06 10:31 engine a881e4277: inner health=1 vram=11459 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+reasoning-effort-allow low,medium
+{"family": "coding", "name": "xfer-mime-01", "seed": 1, "arm": "mirai-layer", "ok": false, "tokens": 26560, "wall_s": 379.5, "detail": ["hidden1:not_7bit", "hidden2:date"]}
+{"family": "coding", "name": "xfer-mime-01", "seed": 2, "arm": "mirai-layer", "ok": false, "tokens": 25778, "wall_s": 373.8, "detail": ["candidate_unavailable"]}
+{"family": "coding", "name": "xfer-mime-01", "seed": 3, "arm": "mirai-layer", "ok": false, "tokens": 22182, "wall_s": 316.5, "detail": ["hidden1:result_schema", "hidden2:result_schema"]}
+{"family": "coding", "name": "xfer-mime-01", "seed": 4, "arm": "mirai-layer", "ok": false, "tokens": 19673, "wall_s": 280.6, "detail": ["hidden1:result_schema", "hidden2:date"]}
+| coding | xfer-mime-01 | 0/4 |
+| **total** | | **0/4** |
+completion tokens: mirai-layer 94,193
+=== product start 2026-10-06 10:54 engine a881e4277: inner health=1 vram=11459 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+=== done 10:54; product restored with defaults

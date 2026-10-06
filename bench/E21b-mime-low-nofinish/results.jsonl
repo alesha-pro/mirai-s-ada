@@ -1,0 +1,4 @@
+{"family": "coding", "name": "xfer-mime-01", "seed": 1, "arm": "mirai-layer", "ok": false, "detail": ["hidden1:not_7bit", "hidden2:date"], "tokens": 26560, "responses": 12, "terminal": "response_cap", "wall_s": 379.5}
+{"family": "coding", "name": "xfer-mime-01", "seed": 2, "arm": "mirai-layer", "ok": false, "detail": ["candidate_unavailable"], "tokens": 25778, "responses": 12, "terminal": "response_cap", "wall_s": 373.8}
+{"family": "coding", "name": "xfer-mime-01", "seed": 3, "arm": "mirai-layer", "ok": false, "detail": ["hidden1:result_schema", "hidden2:result_schema"], "tokens": 22182, "responses": 12, "terminal": "response_cap", "wall_s": 316.5}
+{"family": "coding", "name": "xfer-mime-01", "seed": 4, "arm": "mirai-layer", "ok": false, "detail": ["hidden1:result_schema", "hidden2:date"], "tokens": 19673, "responses": 12, "terminal": "response_cap", "wall_s": 280.6}

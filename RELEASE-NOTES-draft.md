@@ -23,8 +23,9 @@ Quality, measured with plans and gates frozen before results (`docs/REPORT.md`):
   run their own tools against the raw server (launch with `MIRAI_EFFORT_ALLOWED=low,medium`).
 
 What did not work, kept in the record: overlapping the level decode behind the GEMM (the int8 GEMM already runs at
-the card's tensor peak), a round-countdown note for tool loops (read and ignored), the finish-sentence test (E21:
-TBD).
+the card's tensor peak), a round-countdown note for tool loops (read and ignored), removing the layer's
+"run it on the example" sentence (7 -> 4 of 12 without it: it stays), and every layer variant on the MIME task
+(0 of 4 at every setting; only the raw server at effort "low" passes it, 4 of 4).
 
 Install: unzip `mirai-s-bundle-win-x64.zip` into the repo, put the GGUF in `models\`, run `start-server.ps1`.
 Binaries: sm_89 (RTX 40), CUDA 13 runtime included, NVIDIA driver only. Engine: `professorpalmer/llama.cpp-ada-mirai`

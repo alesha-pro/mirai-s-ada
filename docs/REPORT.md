@@ -159,6 +159,8 @@ before results:
 | E19 | a round-countdown note on tool results from the 8th round | 7/12, identical to E18; the model reads the note ("1 response remains... I need to wrap this up") and spends the last response on a tool call anyway; off |
 | ML2e-low | coding + computation, both arms, effort "low" (server allow-list verified on the process) | raw 8 -> **12**/27 (MIME 0 -> 4/4), layer 18 -> **23**/27 (coding 3 -> 8 with E18 riding along; computation 15/15 both); tokens +31% raw, +13% layer; medium stays the default, "low" for raw coding agents |
 | E20 | MIME at low through the layer with cards off, then lint only | 0/4, then 2/4 (raw 4/4): the cards are not the cause alone; the finish sentence accounts for part; the full-layer prompt makes the first response 2.6x longer on this item (23,382 vs 8,948 tokens) |
+| ML2f | second seed set (5-8) for the coding family at medium | layer 5/12, raw 3/12: over both seed sets layer **12/24**, raw 7/24 (tar 1 -> 5 of 8, ZIP 6 -> 7, MIME 0 -> 0) |
+| E21 | the finish sentence on Mirai S (coding x12 at medium without it; MIME x4 at low without it, cards on) | 4/12 vs 7/12 with it: the sentence helps here and stays; MIME 0/4 either way at every setting except raw at low (4/4) |
 | determinism probe | same request and seed, seven cache/sampling conditions, the layer path, and E18 vs E19 first turns | identical in every condition; 11 of 12 suite first turns byte-identical; one late divergence 35k characters into a 75k response. 4-seed deltas of 1 to 2 are noise; the paired design stands |
 
 ML2d-low (meant as the "low" run) was a medium replay because the launcher's harness-proofing normalized the effort
