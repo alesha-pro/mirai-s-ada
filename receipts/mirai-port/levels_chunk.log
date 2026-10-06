@@ -1,0 +1,30 @@
+=== levels chunk 2026-10-05 16:00 engine 4b0caa048
+--- last log lines:
+L32 8 16 24 64 (chunk 32 8 16 24 64 MiB) prefill 16.8k: ; vram after 55 MiB
+MMA1024 health=1 vram_used=11368 MiB
+MMA1024 (mma path up to 1024 tokens) prefill 16.8k: 760 / 764 tok/s; vram after 11414 MiB
+=== product start 2026-10-05 16:01 engine 4b0caa048: inner health=1 vram=11428 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+=== done 16:01
+=== levels chunk 2026-10-05 16:03 engine 4b0caa048
+L32 health=1 vram_used=11368 MiB
+L32 (chunk 32 MiB) prefill 16.8k: 1046 / 1057 tok/s; vram after 11494 MiB
+L8 health=1 vram_used=11368 MiB
+L8 (chunk 8 MiB) prefill 16.8k: 936 / 950 tok/s; vram after 11442 MiB
+L16 health=1 vram_used=11368 MiB
+L16 (chunk 16 MiB) prefill 16.8k: 956 / 969 tok/s; vram after 11452 MiB
+L24 health=1 vram_used=11368 MiB
+L24 (chunk 24 MiB) prefill 16.8k: 1016 / 1031 tok/s; vram after 11474 MiB
+L64 health=1 vram_used=11368 MiB
+L64 (chunk 64 MiB) prefill 16.8k: 1090 / 1104 tok/s; vram after 11542 MiB
+=== product start 2026-10-05 16:07 engine 4b0caa048: inner health=1 vram=11428 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+=== done 16:07
+=== levels chunk 2026-10-05 16:07 engine 4b0caa048
+L128 health=1 vram_used=11368 MiB
+L128 (chunk 128 MiB) prefill 16.8k: 1103 / 1118 tok/s; vram after 11566 MiB
+L256 health=1 vram_used=11368 MiB
+L256 (chunk 256 MiB) prefill 16.8k: 1098 / 1117 tok/s; vram after 11566 MiB
+=== product start 2026-10-05 16:09 engine 4b0caa048: inner health=1 vram=11428 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+=== done 16:09

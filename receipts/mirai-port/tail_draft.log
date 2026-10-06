@@ -1,0 +1,18 @@
+=== tail draft 2026-10-05 01:33 engine 4bdc6587b; idle 55 MiB
+T2 health=1 vram_used=11024 MiB
+T2 I llama_context: n_rs_seq              = 2;I llama_memory_recurrent:      CUDA0 RS buffer size =   448.88 MiB;I llama_context: n_rs_seq              = 2;I llama_context: n_rs_seq              = 2;I llama_memory_recurrent:      CUDA0 RS buffer size =   448.88 MiB;I llama_context: n_rs_seq              = 2;
+T2 depth 60000: mean decode 32.2 tok/s
+T2 depth 120000: mean decode 15.1 tok/s
+T2 vram_after=11130 MiB
+T3 health=1 vram_used=11174 MiB
+T3 I llama_context: n_rs_seq              = 3;I llama_memory_recurrent:      CUDA0 RS buffer size =   598.50 MiB;I llama_context: n_rs_seq              = 3;I llama_context: n_rs_seq              = 3;I llama_memory_recurrent:      CUDA0 RS buffer size =   598.50 MiB;I llama_context: n_rs_seq              = 3;
+T3 depth 60000: mean decode 37.0 tok/s
+T3 depth 120000: mean decode 17.8 tok/s
+T3 vram_after=11296 MiB
+T4 health=1 vram_used=11324 MiB
+T4 I llama_context: n_rs_seq              = 4;I llama_memory_recurrent:      CUDA0 RS buffer size =   748.12 MiB;I llama_context: n_rs_seq              = 4;I llama_context: n_rs_seq              = 4;I llama_memory_recurrent:      CUDA0 RS buffer size =   748.12 MiB;I llama_context: n_rs_seq              = 4;
+T4 depth 60000: mean decode 38.8 tok/s
+T4 depth 120000: mean decode 19.3 tok/s
+T4 vram_after=11430 MiB
+stopped 1
+=== done 01:55

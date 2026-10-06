@@ -1,0 +1,4 @@
+V1 pid=15756 port=18081 ctx=32768 extra=[--spec-type draft-mtp --spec-draft-n-max 2 -ctkd q8_0 -ctvd q8_0] log=C:\Users\pwall\Projects\mirai-s-serve\logs\V1.log
+V1 health=1 vram_used=10700 MiB
+V1: prompt 2395 tok at 887 tok/s, decode 66.7 tok/s (32 tok), draft_n=26 accepted=19
+V1 vram_peak_now=10826 MiB

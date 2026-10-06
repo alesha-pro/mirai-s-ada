@@ -1,0 +1,33 @@
+=== determinism probe 2026-10-06 06:05 engine f0c1cda47
+determinism probe: http://127.0.0.1:18080 effort=medium n=3 max_tokens=4096 seed=7919
+A cache_prompt=true, back to back      IDENTICAL d190f91c5f61/8948tok d190f91c5f61/8948tok d190f91c5f61/8948tok
+B cache_prompt=false, back to back     IDENTICAL d190f91c5f61/8948tok d190f91c5f61/8948tok d190f91c5f61/8948tok
+C cache_prompt=true, other prompt between IDENTICAL d190f91c5f61/8948tok d190f91c5f61/8948tok d190f91c5f61/8948tok
+D greedy floor: temp 0, cache false, 64 tok IDENTICAL 0d9f13018124/6865tok 0d9f13018124/6865tok 0d9f13018124/6865tok
+E greedy, cache true, other between, 64 tok IDENTICAL 0d9f13018124/6865tok 0d9f13018124/6865tok 0d9f13018124/6865tok
+probe exit 0
+--- through the layer (:8080), lint only, condition B, n=2 06:35
+determinism probe: http://127.0.0.1:8080 effort=medium n=2 max_tokens=4096 seed=7919
+B cache_prompt=false, back to back     IDENTICAL d190f91c5f61/8948tok d190f91c5f61/8948tok
+--- through the layer, full defaults (cards + finish sentence), condition B, n=2
+determinism probe: http://127.0.0.1:8080 effort=medium n=2 max_tokens=4096 seed=7919
+B cache_prompt=false, back to back     IDENTICAL 4dbf0bd14152/23382tok 4dbf0bd14152/23382tok
+layer probe exit 0
+--- raw (:18080), effort low, condition B, n=2 06:51
+determinism probe: http://127.0.0.1:18080 effort=low n=2 max_tokens=4096 seed=7919
+B cache_prompt=false, back to back     IDENTICAL d190f91c5f61/8948tok d190f91c5f61/8948tok
+low probe exit 0
+--- raw, effort medium, conditions F and G (sibling prompt between), n=3 06:55
+determinism probe: http://127.0.0.1:18080 effort=medium n=3 max_tokens=4096 seed=7919
+F cache true, sibling prompt (same system) between IDENTICAL d190f91c5f61/8948tok d190f91c5f61/8948tok d190f91c5f61/8948tok
+G greedy, cache true, sibling between, 64 tok IDENTICAL 0d9f13018124/6865tok 0d9f13018124/6865tok 0d9f13018124/6865tok
+--- same, product restarted with MIRAI_PREFILL_PLANES=2 (exact prefill numerics) 07:09
+=== product start 2026-10-06 07:10 engine f0c1cda47: inner health=1 vram=11459 MiB
+prefill ubatch 1024  mask=packed 1-bit  planes=2  level chunk 128 MiB
+determinism probe: http://127.0.0.1:18080 effort=medium n=3 max_tokens=4096 seed=7919
+B cache_prompt=false, back to back     IDENTICAL 7b2f0ccf7434/7654tok 7b2f0ccf7434/7654tok 7b2f0ccf7434/7654tok
+F cache true, sibling prompt (same system) between DIFFER    7b2f0ccf7434/7654tok 7f6ff3f4c97f/15191tok 7b2f0ccf7434/7654tok  first divergence at char 13313 of 18815/36553
+G greedy, cache true, sibling between, 64 tok IDENTICAL 3d5d3fad0848/7850tok 3d5d3fad0848/7850tok 3d5d3fad0848/7850tok
+=== product start 2026-10-06 07:31 engine f0c1cda47: inner health=1 vram=11459 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+F/G probe exit 0; product restored with defaults

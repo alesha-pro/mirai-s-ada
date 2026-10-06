@@ -1,0 +1,23 @@
+=== E20 2026-10-06 05:11 engine f0c1cda47 layer 1f4277d
+=== product start 2026-10-06 05:11 engine f0c1cda47: inner health=1 vram=11459 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+reasoning-effort-allow low,medium
+--- E20-mime-nocards 05:11 extra {"api_cards":false}
+{"family": "coding", "name": "xfer-mime-01", "seed": 1, "arm": "mirai-layer", "ok": false, "tokens": 32211, "wall_s": 443.7, "detail": ["hidden1:result_schema"]}
+{"family": "coding", "name": "xfer-mime-01", "seed": 2, "arm": "mirai-layer", "ok": false, "tokens": 25273, "wall_s": 347.6, "detail": ["hidden1:unrecoverable_json"]}
+{"family": "coding", "name": "xfer-mime-01", "seed": 3, "arm": "mirai-layer", "ok": false, "tokens": 29898, "wall_s": 410.8, "detail": ["hidden1:subject", "hidden2:date"]}
+{"family": "coding", "name": "xfer-mime-01", "seed": 4, "arm": "mirai-layer", "ok": false, "tokens": 27479, "wall_s": 376.9, "detail": ["hidden1:result_schema"]}
+| coding | xfer-mime-01 | 0/4 |
+| **total** | | **0/4** |
+completion tokens: mirai-layer 114,861
+--- E20-mime-lintonly 05:37 extra {"api_cards":false,"finish_note":false}
+{"family": "coding", "name": "xfer-mime-01", "seed": 1, "arm": "mirai-layer", "ok": false, "tokens": 35456, "wall_s": 495.1, "detail": ["hidden1:result_schema"]}
+{"family": "coding", "name": "xfer-mime-01", "seed": 2, "arm": "mirai-layer", "ok": true, "tokens": 29311, "wall_s": 406.2, "detail": []}
+{"family": "coding", "name": "xfer-mime-01", "seed": 3, "arm": "mirai-layer", "ok": false, "tokens": 32522, "wall_s": 450.9, "detail": ["hidden1:result_schema"]}
+{"family": "coding", "name": "xfer-mime-01", "seed": 4, "arm": "mirai-layer", "ok": true, "tokens": 18968, "wall_s": 263.0, "detail": []}
+| coding | xfer-mime-01 | 2/4 |
+| **total** | | **2/4** |
+completion tokens: mirai-layer 116,257
+=== product start 2026-10-06 06:05 engine f0c1cda47: inner health=1 vram=11459 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+=== done 06:05; product restored with defaults

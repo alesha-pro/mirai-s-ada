@@ -1,0 +1,12 @@
+=== prefill phase timing 2026-10-05 09:46 engine c6d3ff7be
+F2 health=1 vram_used=11324 MiB
+F2: prompt 16824 tok at 774 tok/s (timing sync on, slower than the product)
+I mirai prefill timing over 1024 calls (47531950080 params, 524288 token-rows, planes 2): split 1.8% levels 23.8% gemm 63.9% combine 10.5%; levels 251 Gparam/s, gemm 288.6 ms per 512 tokens per 27B
+I mirai prefill timing over 1024 calls (71041024000 params, 524288 token-rows, planes 2): split 1.5% levels 22.1% gemm 69.6% combine 6.8%; levels 251 Gparam/s, gemm 338.5 ms per 512 tokens per 27B
+I mirai prefill timing over 1024 calls (46630174720 params, 524288 token-rows, planes 2): split 1.8% levels 23.9% gemm 63.8% combine 10.5%; levels 249 Gparam/s, gemm 289.5 ms per 512 tokens per 27B
+Fffn health=1 vram_used=11324 MiB
+Fffn: prompt 16824 tok at 902 tok/s (timing sync on, slower than the product)
+I mirai prefill timing over 1024 calls (47531950080 params, 524288 token-rows, planes 2): split 2.1% levels 27.4% gemm 60.5% combine 10.1%; levels 252 Gparam/s, gemm 236.8 ms per 512 tokens per 27B
+I mirai prefill timing over 1024 calls (71041024000 params, 524288 token-rows, planes 2): split 2.1% levels 30.2% gemm 60.8% combine 6.9%; levels 253 Gparam/s, gemm 214.9 ms per 512 tokens per 27B
+I mirai prefill timing over 1024 calls (46630174720 params, 524288 token-rows, planes 2): split 2.0% levels 27.3% gemm 60.6% combine 10.1%; levels 251 Gparam/s, gemm 238.9 ms per 512 tokens per 27B
+=== done 09:47

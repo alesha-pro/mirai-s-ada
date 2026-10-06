@@ -1,0 +1,514 @@
+diff --git a/gguf-py/gguf/constants.py b/gguf-py/gguf/constants.py
+index 9a7a5e5bf..ac7049437 100644
+--- a/gguf-py/gguf/constants.py
++++ b/gguf-py/gguf/constants.py
+@@ -5722,6 +5722,11 @@ class GGMLQuantizationType(IntEnum):
+     NVFP4   = 40
+     Q1_0    = 41
+     Q2_0    = 42
++    # Mirai S trellis formats (ids kept far from upstream's range). Opaque: rows are interleaved in groups of 32.
++    MS_V4T8 = 90
++    MS_V2T4 = 91
++    MS_V2T6 = 92
++    MS_I3   = 93
+ 
+ 
+ class ExpertGatingFuncType(IntEnum):
+@@ -5916,6 +5921,10 @@ GGML_QUANT_SIZES: dict[GGMLQuantizationType, tuple[int, int]] = {
+     GGMLQuantizationType.NVFP4:   (64, 4 + 32),
+     GGMLQuantizationType.Q1_0:    (128, 2 + 16),
+     GGMLQuantizationType.Q2_0:    (64, 2 + 16),
++    GGMLQuantizationType.MS_V4T8: (64, 16 + 1),   # per 64-column packet: 16 tape bytes + 1 entry byte
++    GGMLQuantizationType.MS_V2T4: (64, 16 + 2),   # 16 tape bytes + 16-bit entry state
++    GGMLQuantizationType.MS_V2T6: (128, 48 + 2),  # 48 tape bytes + 16-bit entry state
++    GGMLQuantizationType.MS_I3:   (128, 48 + 1),  # two 64-column groups of 3-bit codes + their ladder nibbles
+ }
+ 
+ 
+diff --git a/src/llama-arch.cpp b/src/llama-arch.cpp
+index 9d2331c2f..48290886d 100644
+--- a/src/llama-arch.cpp
++++ b/src/llama-arch.cpp
+@@ -706,6 +706,10 @@ static const std::map<llm_tensor, const char *> LLM_TENSOR_NAMES = {
+     { LLM_TENSOR_DFLASH_SELECTOR_PREV,                   "selector_predecessor" },
+     { LLM_TENSOR_DFLASH_SELECTOR_NEXT,                   "selector_successor" },
+     { LLM_TENSOR_DFLASH_SELECTOR_HIDDEN,                 "selector_hidden" },
++    { LLM_TENSOR_MIRAI_ROT_5120,                         "mirai.rot.5120" },
++    { LLM_TENSOR_MIRAI_ROT_6144,                         "mirai.rot.6144" },
++    { LLM_TENSOR_MIRAI_ROT_17408,                        "mirai.rot.17408" },
++    { LLM_TENSOR_MIRAI_HEAD_AUX,                         "mirai.head_aux" },
+ };
+ 
+ // declare information about the model weight tensors:
+@@ -997,6 +1001,11 @@ static const std::map<llm_tensor, llm_tensor_info> LLM_TENSOR_INFOS = {
+     {LLM_TENSOR_DFLASH_SELECTOR_PREV,       {LLM_TENSOR_LAYER_OUTPUT,    GGML_OP_GET_ROWS}},
+     {LLM_TENSOR_DFLASH_SELECTOR_NEXT,       {LLM_TENSOR_LAYER_OUTPUT,    GGML_OP_GET_ROWS}},
+     {LLM_TENSOR_DFLASH_SELECTOR_HIDDEN,     {LLM_TENSOR_LAYER_OUTPUT,    GGML_OP_MUL_MAT}},
++    // Mirai S: read by ggml_mirai_quantize / ggml_mirai_mul_mat; probed as MUL, which every backend supports
++    {LLM_TENSOR_MIRAI_ROT_5120,             {LLM_TENSOR_LAYER_OUTPUT,    GGML_OP_MUL}},
++    {LLM_TENSOR_MIRAI_ROT_6144,             {LLM_TENSOR_LAYER_OUTPUT,    GGML_OP_MUL}},
++    {LLM_TENSOR_MIRAI_ROT_17408,            {LLM_TENSOR_LAYER_OUTPUT,    GGML_OP_MUL}},
++    {LLM_TENSOR_MIRAI_HEAD_AUX,             {LLM_TENSOR_LAYER_OUTPUT,    GGML_OP_MUL}},
+ };
+ 
+ LLM_KV::LLM_KV(llm_arch arch, const char * suffix) : arch(arch), suffix(suffix) {}
+diff --git a/src/llama-arch.h b/src/llama-arch.h
+index 23b6b3810..2cfe74a14 100644
+--- a/src/llama-arch.h
++++ b/src/llama-arch.h
+@@ -713,6 +713,11 @@ enum llm_tensor {
+     LLM_TENSOR_DFLASH_SELECTOR_PREV,
+     LLM_TENSOR_DFLASH_SELECTOR_NEXT,
+     LLM_TENSOR_DFLASH_SELECTOR_HIDDEN,
++    // Mirai S shared tensors: input rotations per width (signs, then small_q), head input signs + ladder
++    LLM_TENSOR_MIRAI_ROT_5120,
++    LLM_TENSOR_MIRAI_ROT_6144,
++    LLM_TENSOR_MIRAI_ROT_17408,
++    LLM_TENSOR_MIRAI_HEAD_AUX,
+ };
+ 
+ 
+diff --git a/src/llama-context.cpp b/src/llama-context.cpp
+index 8675f6087..3d2d52309 100644
+--- a/src/llama-context.cpp
++++ b/src/llama-context.cpp
+@@ -2556,6 +2556,7 @@ llm_graph_params llama_context::graph_params(
+         /*.mctx        =*/ mctx,
+         /*.cross       =*/ &cross,
+         /*.prec_policy =*/ &model.prec_policy,
++        /*.mirai       =*/ model.mirai.enabled ? &model.mirai : nullptr,
+         /*.samplers    =*/ sampling.samplers,
+         /*.n_outputs   =*/ n_outputs,
+         /*.cb          =*/ graph_get_cb(),
+diff --git a/src/llama-graph.cpp b/src/llama-graph.cpp
+index 0b3bab612..f202c2ff5 100644
+--- a/src/llama-graph.cpp
++++ b/src/llama-graph.cpp
+@@ -1490,6 +1490,7 @@ llm_graph_context::llm_graph_context(const llm_graph_params & params) :
+     mctx             (params.mctx),
+     cross            (params.cross),
+     prec_policy      (params.prec_policy),
++    mirai            (params.mirai),
+     samplers         (params.samplers),
+     cb_func          (params.cb),
+     res              (params.res),
+@@ -1512,10 +1513,51 @@ ggml_tensor * llm_graph_context::build_cvec(
+     return cvec->apply_to(ctx0, cur, il);
+ }
+ 
++ggml_tensor * llm_graph_context::build_mirai_mm(
++          ggml_tensor * w,
++          ggml_tensor * cur,
++          ggml_tensor * w_s) const {
++    GGML_ASSERT(mirai && "Mirai S weight without the model's mirai.* tensors");
++    GGML_ASSERT(w_s && w_s->ne[0] == w->ne[1] && "Mirai S weight without its per-row scale");
++    const bool head = w->type == GGML_TYPE_MS_I3;
++    const int64_t n_in = w->ne[0];
++
++    ggml_tensor * xq;
++    const auto key = std::make_pair(static_cast<const ggml_tensor *>(cur), head);
++    const auto it = mirai_xq.find(key);
++    if (it != mirai_xq.end()) {
++        xq = it->second;
++    } else {
++        ggml_tensor * x = ggml_is_contiguous(cur) ? cur : ggml_cont(ctx0, cur);
++        x = ggml_reshape_2d(ctx0, x, n_in, ggml_nelements(x) / n_in);
++        ggml_tensor * rot = head ? ggml_view_1d(ctx0, mirai->head_aux, n_in, 0) : mirai->rot(n_in);
++        GGML_ASSERT(rot && "Mirai S: no rotation for this input width");
++        xq = ggml_mirai_quantize(ctx0, x, rot, head);
++        mirai_xq.emplace(key, xq);
++    }
++
++    ggml_tensor * res;
++    if (head) {
++        ggml_tensor * ladder = ggml_view_1d(ctx0, mirai->head_aux, 16, n_in * sizeof(float));
++        res = ggml_mirai_mul_mat(ctx0, w, xq, w_s, ladder, nullptr);
++    } else {
++        res = ggml_mirai_mul_mat(ctx0, w, xq, w_s, nullptr, mirai->codebook(w->type));
++    }
++    if (ggml_n_dims(cur) > 2) {
++        res = ggml_reshape_4d(ctx0, res, w->ne[1], cur->ne[1], cur->ne[2], cur->ne[3]);
++    }
++    return res;
++}
++
+ ggml_tensor * llm_graph_context::build_lora_mm(
+           ggml_tensor * w,
+           ggml_tensor * cur,
+           ggml_tensor * w_s) const {
++    if (ggml_is_mirai_s(w->type)) {
++        GGML_ASSERT(loras->empty() && "LoRA adapters on Mirai S weights are not supported");
++        return build_mirai_mm(w, cur, w_s);
++    }
++
+     ggml_tensor * res = ggml_mul_mat(ctx0, w, cur);
+ 
+     if (prec_policy) {
+@@ -1792,7 +1834,15 @@ ggml_tensor * llm_graph_context::build_ffn(
+     GGML_ASSERT(!gate_s || !gate || gate->type != GGML_TYPE_NVFP4 || !has_lora(gate));
+     GGML_ASSERT(!down_s || !down || down->type != GGML_TYPE_NVFP4 || !has_lora(down));
+ 
+-    ggml_tensor * tmp = up ? build_lora_mm(up, cur) : cur;
++    // Mirai S weights apply their per-row scale inside the matmul
++    ggml_tensor * up_ms   = up   && ggml_is_mirai_s(up->type)   ? up_s   : nullptr;
++    ggml_tensor * gate_ms = gate && ggml_is_mirai_s(gate->type) ? gate_s : nullptr;
++    ggml_tensor * down_ms = down && ggml_is_mirai_s(down->type) ? down_s : nullptr;
++    if (up_ms)   { up_s   = nullptr; }
++    if (gate_ms) { gate_s = nullptr; }
++    if (down_ms) { down_s = nullptr; }
++
++    ggml_tensor * tmp = up ? build_lora_mm(up, cur, up_ms) : cur;
+     cb(tmp, "ffn_up", il);
+ 
+     if (up_b) {
+@@ -1809,12 +1859,12 @@ ggml_tensor * llm_graph_context::build_ffn(
+         switch (type_gate) {
+             case LLM_FFN_SEQ:
+                 {
+-                    cur = build_lora_mm(gate, tmp);
++                    cur = build_lora_mm(gate, tmp, gate_ms);
+                     cb(cur, "ffn_gate", il);
+                 } break;
+             case LLM_FFN_PAR:
+                 {
+-                    cur = build_lora_mm(gate, cur);
++                    cur = build_lora_mm(gate, cur, gate_ms);
+                     cb(cur, "ffn_gate", il);
+                 } break;
+         }
+@@ -1932,7 +1982,7 @@ ggml_tensor * llm_graph_context::build_ffn(
+     }
+ 
+     if (down) {
+-        cur = build_lora_mm(down, cur);
++        cur = build_lora_mm(down, cur, down_ms);
+         if (arch == LLM_ARCH_GLM4 || arch == LLM_ARCH_GLM4_MOE || arch == LLM_ARCH_JAIS2) {
+             // GLM4, GLM4_MOE, and JAIS2 seem to have numerical issues with half-precision accumulators
+             ggml_prec_set_acc(cur, GGML_PREC_F32);
+diff --git a/src/llama-graph.h b/src/llama-graph.h
+index 3daa425bc..ce4f2931f 100644
+--- a/src/llama-graph.h
++++ b/src/llama-graph.h
+@@ -20,6 +20,7 @@ struct ggml_tensor;
+ struct llama_cparams;
+ struct llama_layer;
+ struct llama_prec_policy;
++struct llama_mirai_s;
+ 
+ struct llama_memory_context_i;
+ 
+@@ -790,6 +791,8 @@ struct llm_graph_params {
+ 
+     const llama_prec_policy * prec_policy = nullptr;
+ 
++    const llama_mirai_s * mirai = nullptr;
++
+     std::map<llama_seq_id, llama_sampler *> samplers;
+ 
+     static bool samplers_equal(
+@@ -1032,6 +1035,11 @@ struct llm_graph_context {
+ 
+     const llama_prec_policy * prec_policy;
+ 
++    const llama_mirai_s * mirai;
++
++    // Mirai S: quantized inputs by (input, head), so weights sharing an input share one ggml_mirai_quantize
++    mutable std::map<std::pair<const ggml_tensor *, bool>, ggml_tensor *> mirai_xq;
++
+     std::map<llama_seq_id, llama_sampler *> samplers;
+ 
+     const llm_graph_cb & cb_func;
+@@ -1060,6 +1068,12 @@ struct llm_graph_context {
+               ggml_tensor * cur,
+               ggml_tensor * w_s = nullptr) const;
+ 
++    // Mirai S weight: w_s is its per-row scale, applied inside the matmul
++    ggml_tensor * build_mirai_mm(
++              ggml_tensor * w,
++              ggml_tensor * cur,
++              ggml_tensor * w_s) const;
++
+     // do mat_mul_id, while optionally apply lora and per-expert scale
+     ggml_tensor * build_lora_mm_id(
+               ggml_tensor * w,   // ggml_tensor * as
+diff --git a/src/llama-model-loader.cpp b/src/llama-model-loader.cpp
+index 43c396f15..7250ed01b 100644
+--- a/src/llama-model-loader.cpp
++++ b/src/llama-model-loader.cpp
+@@ -951,7 +951,19 @@ static bool weight_buft_supported(const llama_hparams & hparams, ggml_tensor * w
+                 op_tensor = ggml_get_rows(ctx, w, b);
+             } break;
+         case GGML_OP_MUL_MAT:
+-            {
++            if (ggml_is_mirai_s(w->type)) {
++                // Mirai S weights run as ggml_mirai_mul_mat on a quantized input
++                ggml_tensor * scale = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, w->ne[1]);
++                if (w->type == GGML_TYPE_MS_I3) {
++                    ggml_tensor * x_rot  = ggml_new_tensor_2d(ctx, GGML_TYPE_F16, w->ne[0], 512);
++                    ggml_tensor * ladder = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 16);
++                    op_tensor = ggml_mirai_mul_mat(ctx, w, x_rot, scale, ladder, nullptr);
++                } else {
++                    const float codebook[5] = {};
++                    ggml_tensor * xq = ggml_new_tensor_2d(ctx, GGML_TYPE_I32, w->ne[0] / 2 + 8, 512);
++                    op_tensor = ggml_mirai_mul_mat(ctx, w, xq, scale, nullptr, codebook);
++                }
++            } else {
+                 ggml_tensor * b = ggml_new_tensor_4d(ctx, GGML_TYPE_F32, w->ne[0], 512, w->ne[2], w->ne[3]);
+                 op_tensor = ggml_mul_mat(ctx, w, b);
+             } break;
+diff --git a/src/llama-model.cpp b/src/llama-model.cpp
+index ab5e744b5..bb1b013dc 100644
+--- a/src/llama-model.cpp
++++ b/src/llama-model.cpp
+@@ -1221,6 +1221,19 @@ struct llama_model::impl {
+     std::vector<float> tensor_split_owned;
+ };
+ 
++ggml_tensor * llama_mirai_s::rot(int64_t n_in) const {
++    switch (n_in) {
++        case 5120:  return rot_5120;
++        case 6144:  return rot_6144;
++        case 17408: return rot_17408;
++        default:    return nullptr;
++    }
++}
++
++const float * llama_mirai_s::codebook(ggml_type type) const {
++    return type == GGML_TYPE_MS_V4T8 ? codebook_v4 : codebook_v2;
++}
++
+ bool llama_prec_policy::apply(ggml_tensor * res) const {
+     if (!res || !res->src[0]) {
+         return false;
+@@ -1629,38 +1642,45 @@ bool llama_model_base::load_tensors(llama_model_loader & ml) {
+ 
+         // generic pass: load optional per-tensor/per-expert ".scale" tensors (e.g. NVFP4 scale2)
+         // this avoids having to add scale loading to every architecture
++        // (Mirai S weights carry one scale per output row instead)
++        const auto create_scale = [&](llm_tensor type, int i, const ggml_tensor * w) {
++            if (w && ggml_is_mirai_s(w->type)) {
++                return create_tensor(tn(type, "scale", i), {w->ne[1]}, 0);
++            }
++            return create_tensor(tn(type, "scale", i), {1}, TENSOR_NOT_REQUIRED);
++        };
+         for (int i = 0; i < n_layer_all; ++i) {
+             auto & layer = layers[i];
+ 
+             // attention weight scales (per-tensor, shape {1})
+             if (!layer.wq_s && layer.wq) {
+-                layer.wq_s = create_tensor(tn(LLM_TENSOR_ATTN_Q,   "scale", i), {1}, TENSOR_NOT_REQUIRED);
++                layer.wq_s = create_scale(LLM_TENSOR_ATTN_Q, i, layer.wq);
+             }
+             if (!layer.wk_s && layer.wk) {
+-                layer.wk_s = create_tensor(tn(LLM_TENSOR_ATTN_K,   "scale", i), {1}, TENSOR_NOT_REQUIRED);
++                layer.wk_s = create_scale(LLM_TENSOR_ATTN_K, i, layer.wk);
+             }
+             if (!layer.wv_s && layer.wv) {
+-                layer.wv_s = create_tensor(tn(LLM_TENSOR_ATTN_V,   "scale", i), {1}, TENSOR_NOT_REQUIRED);
++                layer.wv_s = create_scale(LLM_TENSOR_ATTN_V, i, layer.wv);
+             }
+             if (!layer.wo_s && layer.wo) {
+-                layer.wo_s = create_tensor(tn(LLM_TENSOR_ATTN_OUT, "scale", i), {1}, TENSOR_NOT_REQUIRED);
++                layer.wo_s = create_scale(LLM_TENSOR_ATTN_OUT, i, layer.wo);
+             }
+             if (!layer.wqkv_s && layer.wqkv) {
+-                layer.wqkv_s = create_tensor(tn(LLM_TENSOR_ATTN_QKV, "scale", i), {1}, TENSOR_NOT_REQUIRED);
++                layer.wqkv_s = create_scale(LLM_TENSOR_ATTN_QKV, i, layer.wqkv);
+             }
+             if (!layer.wqkv_gate_s && layer.wqkv_gate) {
+-                layer.wqkv_gate_s = create_tensor(tn(LLM_TENSOR_ATTN_GATE, "scale", i), {1}, TENSOR_NOT_REQUIRED);
++                layer.wqkv_gate_s = create_scale(LLM_TENSOR_ATTN_GATE, i, layer.wqkv_gate);
+             }
+ 
+             // dense FFN weight scales (per-tensor, shape {1})
+             if (!layer.ffn_gate_s && layer.ffn_gate) {
+-                layer.ffn_gate_s = create_tensor(tn(LLM_TENSOR_FFN_GATE, "scale", i), {1}, TENSOR_NOT_REQUIRED);
++                layer.ffn_gate_s = create_scale(LLM_TENSOR_FFN_GATE, i, layer.ffn_gate);
+             }
+             if (!layer.ffn_down_s && layer.ffn_down) {
+-                layer.ffn_down_s = create_tensor(tn(LLM_TENSOR_FFN_DOWN, "scale", i), {1}, TENSOR_NOT_REQUIRED);
++                layer.ffn_down_s = create_scale(LLM_TENSOR_FFN_DOWN, i, layer.ffn_down);
+             }
+             if (!layer.ffn_up_s && layer.ffn_up) {
+-                layer.ffn_up_s = create_tensor(tn(LLM_TENSOR_FFN_UP, "scale", i), {1}, TENSOR_NOT_REQUIRED);
++                layer.ffn_up_s = create_scale(LLM_TENSOR_FFN_UP, i, layer.ffn_up);
+             }
+             if (!layer.ffn_gate_shexp_s && layer.ffn_gate_shexp) {
+                 layer.ffn_gate_shexp_s = create_tensor(tn(LLM_TENSOR_FFN_GATE_SHEXP, "scale", i), {1}, TENSOR_NOT_REQUIRED);
+@@ -1688,7 +1708,7 @@ bool llama_model_base::load_tensors(llama_model_loader & ml) {
+                 layer.ssm_in_s = create_tensor(tn(LLM_TENSOR_SSM_IN, "scale", i), {1}, TENSOR_NOT_REQUIRED);
+             }
+             if (!layer.ssm_out_s && layer.ssm_out) {
+-                layer.ssm_out_s = create_tensor(tn(LLM_TENSOR_SSM_OUT, "scale", i), {1}, TENSOR_NOT_REQUIRED);
++                layer.ssm_out_s = create_scale(LLM_TENSOR_SSM_OUT, i, layer.ssm_out);
+             }
+             if (!layer.ssm_alpha_s && layer.ssm_alpha) {
+                 layer.ssm_alpha_s = create_tensor(tn(LLM_TENSOR_SSM_ALPHA, "scale", i), {1}, TENSOR_NOT_REQUIRED);
+@@ -1768,6 +1788,27 @@ bool llama_model_base::load_tensors(llama_model_loader & ml) {
+                 layer.nextn.shared_head_head_in_s = create_tensor(tn(LLM_TENSOR_NEXTN_SHARED_HEAD_HEAD, "input_scale", i), {1}, TENSOR_NOT_REQUIRED);
+             }
+         }
++        // Mirai S: the head's per-row scale and the model-wide tensors
++        if (gguf_find_key(ml.metadata, "mirai.version") >= 0) {
++            if (output && ggml_is_mirai_s(output->type)) {
++                output_s = create_tensor(tn(LLM_TENSOR_OUTPUT, "scale"), {output->ne[1]}, 0);
++                mirai.head_aux = create_tensor(tn(LLM_TENSOR_MIRAI_HEAD_AUX), {output->ne[0] + 16}, 0);
++            }
++            mirai.rot_5120  = create_tensor(tn(LLM_TENSOR_MIRAI_ROT_5120),  {5120 + 5 * 5},    TENSOR_NOT_REQUIRED);
++            mirai.rot_6144  = create_tensor(tn(LLM_TENSOR_MIRAI_ROT_6144),  {6144 + 3 * 3},    TENSOR_NOT_REQUIRED);
++            mirai.rot_17408 = create_tensor(tn(LLM_TENSOR_MIRAI_ROT_17408), {17408 + 17 * 17}, TENSOR_NOT_REQUIRED);
++            for (const auto & [key, dst] : { std::make_pair("mirai.codebook.v4", mirai.codebook_v4),
++                                             std::make_pair("mirai.codebook.v2", mirai.codebook_v2) }) {
++                const int kid = gguf_find_key(ml.metadata, key);
++                if (kid < 0 || gguf_get_kv_type(ml.metadata, kid) != GGUF_TYPE_ARRAY ||
++                        gguf_get_arr_type(ml.metadata, kid) != GGUF_TYPE_FLOAT32 || gguf_get_arr_n(ml.metadata, kid) != 5) {
++                    throw std::runtime_error(format("Mirai S: %s must be 5 floats", key));
++                }
++                memcpy(dst, gguf_get_arr_data(ml.metadata, kid), 5 * sizeof(float));
++            }
++            mirai.enabled = true;
++        }
++
+         // output scales
+         if (output && output->type == GGML_TYPE_NVFP4) {
+             // weight scale
+diff --git a/src/llama-model.h b/src/llama-model.h
+index a0f9f1142..e7e51e1bd 100644
+--- a/src/llama-model.h
++++ b/src/llama-model.h
+@@ -623,6 +623,22 @@ struct llama_prec_policy {
+     void load(llama_model_loader & ml, const llama_model & model);
+ };
+ 
++// Mirai S (trellis-compressed linears, ggml_mirai_quantize / ggml_mirai_mul_mat): the model-wide tensors and constants
++struct llama_mirai_s {
++    ggml_tensor * rot_5120  = nullptr;  // f32 [K + order^2]: signs, then small_q
++    ggml_tensor * rot_6144  = nullptr;
++    ggml_tensor * rot_17408 = nullptr;
++    ggml_tensor * head_aux  = nullptr;  // f32 [n_embd + 16]: the head's input signs, then its ladder
++
++    float codebook_v4[5] = {};  // {c, d0, d1, d2, d3}
++    float codebook_v2[5] = {};
++
++    bool enabled = false;
++
++    ggml_tensor * rot(int64_t n_in) const;
++    const float * codebook(ggml_type type) const;
++};
++
+ struct llama_model {
+     llm_type type = LLM_TYPE_UNKNOWN;
+     llm_arch arch = LLM_ARCH_UNKNOWN;
+@@ -635,6 +651,9 @@ struct llama_model {
+     // per-tensor activation precision policy
+     llama_prec_policy prec_policy;
+ 
++    // Mirai S tensors, when the GGUF has them
++    llama_mirai_s mirai;
++
+     // for classifier models
+     std::vector<std::string> classifier_labels;
+ 
+diff --git a/src/models/qwen35.cpp b/src/models/qwen35.cpp
+index a1e263500..b9ec55670 100644
+--- a/src/models/qwen35.cpp
++++ b/src/models/qwen35.cpp
+@@ -64,8 +64,13 @@ void llama_model_qwen35::load_arch_tensors(llama_model_loader & ml) {
+         layer.attn_post_norm = create_tensor(tn(LLM_TENSOR_ATTN_POST_NORM, "weight", il), { n_embd }, flags);
+ 
+         if (!hparams.is_recr(il)) {
+-            // Attention layers
+-            create_tensor_qkv(layer, il, n_embd, n_embd_head_k * n_head * 2, n_embd_k_gqa, n_embd_v_gqa, flags);
++            // Attention layers. Mirai S GGUFs split the output gate off q_proj (attn_gate): Mirai stores the gate
++            // rows in their own trellis block.
++            const bool split_gate = ml.get_weight(tn(LLM_TENSOR_ATTN_GATE, "weight", il).str().c_str()) != nullptr;
++            create_tensor_qkv(layer, il, n_embd, n_embd_head_k * n_head * (split_gate ? 1 : 2), n_embd_k_gqa, n_embd_v_gqa, flags);
++            if (split_gate) {
++                layer.wqkv_gate = create_tensor(tn(LLM_TENSOR_ATTN_GATE, "weight", il), { n_embd, n_embd_head_k * n_head }, flags);
++            }
+             layer.wo = create_tensor(tn(LLM_TENSOR_ATTN_OUT, "weight", il), { n_embd_head_k * n_head, n_embd }, flags);
+ 
+             // Q/K normalization for attention layers
+@@ -262,19 +267,43 @@ ggml_tensor * llama_model_qwen35::graph::build_layer_attn(
+ 
+     // Order: joint QG projection, QG split, Q norm, KV projection, K norm, RoPE, attention
+ 
+-    // Qwen3Next uses a single Q projection that outputs query + gate
+-    auto [Qcur_full, Kcur, Vcur] = build_qkv(model.layers[il], cur,
+-            n_embd_head * 2, n_head,
+-            n_embd_head,     n_head_kv,
+-            n_embd_head,     n_head_kv,
+-            il, false);
+-    cb(Qcur_full, "Qcur_full", il);
++    ggml_tensor * Qcur, * Kcur, * Vcur, * gate;
++    if (model.layers[il].wqkv_gate) {
++        // Mirai S: the output gate is its own weight
++        auto qkv = build_qkv(model.layers[il], cur,
++                n_embd_head, n_head,
++                n_embd_head, n_head_kv,
++                n_embd_head, n_head_kv,
++                il, false);
++        Qcur = ggml_reshape_3d(ctx0, qkv.q, n_embd_head, n_head, n_tokens);
++        Kcur = qkv.k;
++        Vcur = qkv.v;
++        gate = build_lora_mm(model.layers[il].wqkv_gate, cur, model.layers[il].wqkv_gate_s);
++        cb(gate, "gate_reshaped", il);
++    } else {
++        // Qwen3Next uses a single Q projection that outputs query + gate
++        auto [Qcur_full, Kc, Vc] = build_qkv(model.layers[il], cur,
++                n_embd_head * 2, n_head,
++                n_embd_head,     n_head_kv,
++                n_embd_head,     n_head_kv,
++                il, false);
++        cb(Qcur_full, "Qcur_full", il);
++        Kcur = Kc;
++        Vcur = Vc;
++
++        Qcur = ggml_view_3d(ctx0, Qcur_full, n_embd_head, n_head, n_tokens,
++            ggml_element_size(Qcur_full) * n_embd_head * 2,
++            ggml_element_size(Qcur_full) * n_embd_head * 2 * n_head, 0);
++
++        gate = ggml_view_3d(ctx0, Qcur_full, n_embd_head, n_head, n_tokens,
++            ggml_element_size(Qcur_full) * n_embd_head * 2,
++            ggml_element_size(Qcur_full) * n_embd_head * 2 * n_head,
++            ggml_element_size(Qcur_full) * n_embd_head);
++        gate = ggml_cont_2d(ctx0, gate, n_embd_head * n_head, n_tokens);
++        cb(gate, "gate_reshaped", il);
++    }
+     cb(Kcur, "Kcur", il);
+     cb(Vcur, "Vcur", il);
+-
+-    ggml_tensor * Qcur = ggml_view_3d(ctx0, Qcur_full, n_embd_head, n_head, n_tokens,
+-        ggml_element_size(Qcur_full) * n_embd_head * 2,
+-        ggml_element_size(Qcur_full) * n_embd_head * 2 * n_head, 0);
+     cb(Qcur, "Qcur_reshaped", il);
+ 
+     // Apply Q normalization
+@@ -286,13 +315,6 @@ ggml_tensor * llama_model_qwen35::graph::build_layer_attn(
+     Kcur = build_norm(Kcur, model.layers[il].attn_k_norm, nullptr, LLM_NORM_RMS, il);
+     cb(Kcur, "Kcur_normed", il);
+ 
+-    ggml_tensor * gate = ggml_view_3d(ctx0, Qcur_full, n_embd_head, n_head, n_tokens,
+-        ggml_element_size(Qcur_full) * n_embd_head * 2,
+-        ggml_element_size(Qcur_full) * n_embd_head * 2 * n_head,
+-        ggml_element_size(Qcur_full) * n_embd_head);
+-    gate = ggml_cont_2d(ctx0, gate, n_embd_head * n_head, n_tokens);
+-    cb(gate, "gate_reshaped", il);
+-
+     Vcur = ggml_reshape_3d(ctx0, Vcur, n_embd_head, n_head_kv, n_tokens);
+ 
+     // Apply MRoPE
+@@ -453,6 +475,13 @@ ggml_tensor * llama_model_qwen35::graph::build_layer_attn_linear(
+     // Apply gated normalization: self.norm(core_attn_out, z)
+     ggml_tensor * attn_out_norm = build_norm_gated(output, model.layers[il].ssm_norm, z_2d, il);
+ 
++    if (ggml_is_mirai_s(model.layers[il].ssm_out->type) && num_k_heads != num_v_heads) {
++        // Mirai S keeps ssm_out's columns in the checkpoint's order, V heads grouped by K head: undo the tiled order
++        // (head vi * num_k_heads + g -> g * (num_v_heads / num_k_heads) + vi)
++        attn_out_norm = ggml_reshape_4d(ctx0, attn_out_norm, head_v_dim, num_k_heads, num_v_heads / num_k_heads, n_seq_tokens * n_seqs);
++        attn_out_norm = ggml_cont(ctx0, ggml_permute(ctx0, attn_out_norm, 0, 2, 1, 3));
++    }
++
+     // Final reshape: [head_dim, n_heads, n_tokens, n_seqs] -> [n_tokens, n_seqs, n_heads * head_dim]
+     ggml_tensor * final_output = ggml_reshape_3d(ctx0, attn_out_norm, head_v_dim * num_v_heads, n_seq_tokens, n_seqs);
+     cb(final_output, "final_output", il);

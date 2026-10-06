@@ -1,0 +1,141 @@
+diff --git a/tools/server/server-common.cpp b/tools/server/server-common.cpp
+index 2ff790a5d..a44153e08 100644
+--- a/tools/server/server-common.cpp
++++ b/tools/server/server-common.cpp
+@@ -694,6 +694,62 @@ std::string server_tokens::detokenize(const llama_context * ctx, bool special) c
+     return common_detokenize(ctx, text_tokens, special);
+ }
+ 
++size_t server_tokens::get_common_prefix_text(const llama_context * ctx, const server_tokens & b, size_t & n_b) const {
++    size_t na = get_common_prefix(b);
++    n_b = na;
++    if (has_mtmd || b.has_mtmd) {
++        return na;
++    }
++
++    const llama_vocab * vocab = llama_model_get_vocab(llama_get_model(ctx));
++    const auto plain = [&](llama_token t) {
++        return (llama_vocab_get_attr(vocab, t) & (LLAMA_TOKEN_ATTR_CONTROL | LLAMA_TOKEN_ATTR_USER_DEFINED | LLAMA_TOKEN_ATTR_UNKNOWN)) == 0;
++    };
++
++    size_t nb = na;
++    while (na < tokens.size() && nb < b.tokens.size()) {
++        // walk both sides piece by piece until the texts meet at a token boundary or differ
++        std::string sa;
++        std::string sb;
++        size_t ia = na;
++        size_t ib = nb;
++        bool synced = false;
++        for (int step = 0; step < 128; ++step) {
++            if (sa.size() <= sb.size()) {
++                if (ia == tokens.size() || !plain(tokens[ia])) {
++                    break;
++                }
++                sa += common_token_to_piece(ctx, tokens[ia++], true);
++            } else {
++                if (ib == b.tokens.size() || !plain(b.tokens[ib])) {
++                    break;
++                }
++                sb += common_token_to_piece(ctx, b.tokens[ib++], true);
++            }
++            const size_t m = std::min(sa.size(), sb.size());
++            if (sa.compare(0, m, sb, 0, m) != 0) {
++                break;
++            }
++            if (sa.size() == sb.size() && !sa.empty()) {
++                synced = true;
++                break;
++            }
++        }
++        if (!synced) {
++            break;
++        }
++        na = ia;
++        nb = ib;
++        while (na < tokens.size() && nb < b.tokens.size() && tokens[na] == b.tokens[nb]) {
++            na++;
++            nb++;
++        }
++    }
++
++    n_b = nb;
++    return na;
++}
++
+ size_t server_tokens::get_common_prefix(const server_tokens & b) const {
+     const size_t max_idx = std::min(tokens.size(), b.tokens.size());
+ 
+diff --git a/tools/server/server-common.h b/tools/server/server-common.h
+index 9894f5f06..d629a6289 100644
+--- a/tools/server/server-common.h
++++ b/tools/server/server-common.h
+@@ -233,6 +233,12 @@ public:
+ 
+     size_t get_common_prefix(const server_tokens & b) const;
+ 
++    // like get_common_prefix, but also steps over spans where both sides spell the same text with different tokens
++    // (e.g. a generated emoji split into other byte tokens than a re-tokenized prompt gives). Returns the length of
++    // the prefix of *this and sets n_b to the length of the matching prefix of b. Text-only, no control tokens inside
++    // a re-aligned span.
++    size_t get_common_prefix_text(const struct llama_context * ctx, const server_tokens & b, size_t & n_b) const;
++
+     // split the tokens into message spans, skipping over media chunks
+     common_chat_msg_spans find_message_spans(const common_chat_msg_delimiters & delims) const;
+ 
+diff --git a/tools/server/server-context.cpp b/tools/server/server-context.cpp
+index e95fb63ab..98674b95e 100644
+--- a/tools/server/server-context.cpp
++++ b/tools/server/server-context.cpp
+@@ -236,6 +236,15 @@ struct server_batch {
+     }
+ };
+ 
++// LLAMA_SERVER_TEXT_ALIGN=0 turns off matching the prompt cache by text (see server_tokens::get_common_prefix_text)
++static bool server_text_align_enabled() {
++    static const bool enabled = [] {
++        const char * env = getenv("LLAMA_SERVER_TEXT_ALIGN");
++        return env == nullptr || atoi(env) != 0;
++    }();
++    return enabled;
++}
++
+ struct server_slot {
+     int id;
+ 
+@@ -1581,7 +1590,10 @@ private:
+                 }
+ 
+                 // fraction of the Longest Common Prefix length with respect to the input prompt length
+-                const size_t lcp_len = tokens.get_common_prefix(task.tokens);
++                size_t lcp_len = tokens.get_common_prefix(task.tokens);
++                if (server_text_align_enabled()) {
++                    tokens.get_common_prefix_text(ctx_tgt, task.tokens, lcp_len);
++                }
+                 const float f_sim_cur = float(lcp_len) / task.tokens.size();
+ 
+                 SLT_TRC(slot, " - checking sim = %.3f (%zu/%zu) > %.3f\n", f_sim_cur, lcp_len, task.tokens.size(), slot_prompt_similarity);
+@@ -1722,6 +1734,24 @@ private:
+             slot.lora = params_base.lora_adapters;
+         }
+ 
++        // a prompt that re-tokenizes earlier generated text can spell a span with other tokens than were generated
++        // (emoji and other multi-byte characters): take the cached tokens for the text-equal prefix so that the cache,
++        // which a recurrent/hybrid model can only reuse as a whole, still matches
++        if (task.params.cache_prompt && server_text_align_enabled() && !task.is_child() && !slot.prompt.tokens.empty()) {
++            const size_t n_plain = slot.prompt.tokens.get_common_prefix(task.tokens);
++            size_t n_new = 0;
++            const size_t n_cached = slot.prompt.tokens.get_common_prefix_text(ctx_tgt, task.tokens, n_new);
++            if (n_new > n_plain) {
++                const llama_tokens & cached = slot.prompt.tokens.get_tokens();
++                const llama_tokens & prompt = task.tokens.get_tokens();
++                llama_tokens aligned(cached.begin(), cached.begin() + n_cached);
++                aligned.insert(aligned.end(), prompt.begin() + n_new, prompt.end());
++                SLT_INF(slot, "prompt aligned to the cached tokens by text: token prefix %zu, text prefix %zu (%zu prompt tokens), prompt %zu -> %zu tokens\n",
++                        n_plain, n_cached, n_new, task.tokens.size(), aligned.size());
++                task.tokens = server_tokens(aligned, false);
++            }
++        }
++
+         // if using alora, make sure it's only a single one requested and active
+         size_t alora_invocation_start = task.tokens.size();
+         if (lora_all_alora(slot.lora)) {

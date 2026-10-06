@@ -1,0 +1,69 @@
+# T1: Mirai S, MTP draft (n-max 2, q8 draft KV), 64k q8 window, -b 1024 -ub 1024, GGML_CUDA_OP_TIMING=1, CUDA graphs off.
+# 2.4k-token prompt + 400 tokens. First table = the 100 graphs around the prompt (prefill-dominated); last = decode.
+# Engine 7ecc19e25, 2026-10-04 21:1x. Prompt 2407 tok at 51 tok/s, decode 38.7 tok/s (timing overhead).
+
+## first table
+I op timing over 100 graphs: 486.687 ms per graph
+I    138.874 ms/graph   28.5%  x2     MIRAI_MUL_MAT ms_v4t8 cols=1024
+I    138.623 ms/graph   28.5%  x2     MIRAI_MUL_MAT ms_v4t8 cols=1020
+I     81.670 ms/graph   16.8%  x1     MIRAI_MUL_MAT ms_v2t6 cols=1024
+I     81.352 ms/graph   16.7%  x1     MIRAI_MUL_MAT ms_v2t6 cols=1020
+I      8.518 ms/graph    1.8%  x0     MIRAI_MUL_MAT ms_v2t4 cols=1024
+I      8.493 ms/graph    1.7%  x0     MIRAI_MUL_MAT ms_v2t4 cols=1020
+I      3.310 ms/graph    0.7%  x60    MIRAI_MUL_MAT ms_v4t8 cols=3
+I      2.845 ms/graph    0.6%  x57    MIRAI_MUL_MAT ms_v2t6 cols=3
+I      1.191 ms/graph    0.2%  x2     MIRAI_MUL_MAT ms_v4t8 cols=238
+I      1.043 ms/graph    0.2%  x74    MIRAI_QUANTIZE f32 cols=3
+I      1.006 ms/graph    0.2%  x0     GATED_DELTA_NET f32 cols=1404
+I      1.006 ms/graph    0.2%  x0     GATED_DELTA_NET f32 cols=1408
+I      0.930 ms/graph    0.2%  x1     MIRAI_MUL_MAT ms_v2t6 cols=238
+I      0.840 ms/graph    0.2%  x2     MIRAI_QUANTIZE f32 cols=1020
+I      0.837 ms/graph    0.2%  x2     MIRAI_QUANTIZE f32 cols=1024
+I      0.762 ms/graph    0.2%  x6     FLASH_ATTN_EXT f32 cols=24
+I      0.713 ms/graph    0.1%  x174   RESHAPE f32 cols=3
+I      0.692 ms/graph    0.1%  x2     MIRAI_MUL_MAT ms_v4t8 cols=121
+I      0.654 ms/graph    0.1%  x51    CPY f32 cols=1
+I      0.582 ms/graph    0.1%  x0     MIRAI_MUL_MAT ms_i3 cols=1
+I      0.512 ms/graph    0.1%  x1     MIRAI_MUL_MAT ms_v2t6 cols=121
+I      0.500 ms/graph    0.1%  x17    CONCAT f32 cols=10240
+I      0.480 ms/graph    0.1%  x0     MUL_MAT f16 5120x48 cols=121
+I      0.475 ms/graph    0.1%  x27    MUL_MAT f16 5120x48 cols=3
+I      0.440 ms/graph    0.1%  x13    GATED_DELTA_NET f32 cols=387
+I      0.389 ms/graph    0.1%  x34    VIEW f32 cols=0
+I      0.371 ms/graph    0.1%  x17    L2_NORM f32 cols=32
+I      0.323 ms/graph    0.1%  x34    VIEW f32 cols=16
+I      0.311 ms/graph    0.1%  x0     MIRAI_MUL_MAT ms_i3 cols=3
+I      0.260 ms/graph    0.1%  x3     MIRAI_MUL_MAT ms_v2t4 cols=3
+
+## last table
+I op timing over 100 graphs: 17.308 ms per graph
+I      3.772 ms/graph   21.8%  x68    MIRAI_MUL_MAT ms_v4t8 cols=3
+I      3.254 ms/graph   18.8%  x65    MIRAI_MUL_MAT ms_v2t6 cols=3
+I      1.270 ms/graph    7.3%  x84    MIRAI_QUANTIZE f32 cols=3
+I      0.778 ms/graph    4.5%  x190   RESHAPE f32 cols=3
+I      0.637 ms/graph    3.7%  x15    L2_NORM f32 cols=32
+I      0.627 ms/graph    3.6%  x0     MIRAI_MUL_MAT ms_i3 cols=1
+I      0.553 ms/graph    3.2%  x47    CPY f32 cols=1
+I      0.376 ms/graph    2.2%  x15    GATED_DELTA_NET f32 cols=387
+I      0.374 ms/graph    2.2%  x31    MUL_MAT f16 5120x48 cols=3
+I      0.363 ms/graph    2.1%  x31    VIEW f32 cols=0
+I      0.354 ms/graph    2.0%  x0     MIRAI_MUL_MAT ms_i3 cols=3
+I      0.346 ms/graph    2.0%  x5     MUL_MAT f32 256x256 cols=12
+I      0.343 ms/graph    2.0%  x31    VIEW f32 cols=16
+I      0.296 ms/graph    1.7%  x3     MIRAI_MUL_MAT ms_v2t4 cols=3
+I      0.246 ms/graph    1.4%  x43    RMS_NORM f32 cols=3
+I      0.191 ms/graph    1.1%  x31    SCALE f32 cols=1
+I      0.191 ms/graph    1.1%  x5     FLASH_ATTN_EXT f32 cols=24
+I      0.183 ms/graph    1.1%  x15    SSM_CONV f32 cols=3
+I      0.181 ms/graph    1.0%  x15    CONCAT f32 cols=10240
+I      0.177 ms/graph    1.0%  x42    ADD f32 cols=3
+I      0.164 ms/graph    0.9%  x82    VIEW f32 cols=1
+I      0.162 ms/graph    0.9%  x11    SET_ROWS f32 cols=65536
+I      0.156 ms/graph    0.9%  x11    VIEW q8_0 cols=4
+I      0.119 ms/graph    0.7%  x10    VIEW f32 cols=3
+I      0.116 ms/graph    0.7%  x0     MUL_MAT q8_0 5120x17408 cols=1
+I      0.113 ms/graph    0.7%  x53    RESHAPE f32 cols=48
+I      0.109 ms/graph    0.6%  x5     MUL_MAT f32 64x64 cols=48
+I      0.101 ms/graph    0.6%  x15    RMS_NORM f32 cols=48
+I      0.099 ms/graph    0.6%  x31    CPY f32 cols=0
+I      0.094 ms/graph    0.5%  x32    GET_ROWS f32 cols=1

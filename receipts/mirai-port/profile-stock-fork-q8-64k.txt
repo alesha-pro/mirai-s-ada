@@ -1,0 +1,25 @@
+== depth 0
+code   depth      0 (evaluated 32): prefill   177.8 tok/s  ttft   0.18s  decode   40.2 tok/s (400 tok)
+prose  depth      0 (evaluated 28): prefill   159.9 tok/s  ttft   0.18s  decode   40.0 tok/s (400 tok)
+bash   depth      0 (evaluated 32): prefill   183.5 tok/s  ttft   0.17s  decode   39.8 tok/s (400 tok)
+mean decode 40.0 tok/s
+== depth 4000
+code   depth   4000 (evaluated 4048): prefill  1026.7 tok/s  ttft   3.94s  decode   39.6 tok/s (400 tok)
+prose  depth   4000 (evaluated 1020): prefill   924.0 tok/s  ttft   1.10s  decode   39.5 tok/s (400 tok)
+bash   depth   4000 (evaluated 1024): prefill   943.3 tok/s  ttft   1.09s  decode   39.5 tok/s (400 tok)
+mean decode 39.6 tok/s
+== depth 16000
+code   depth  16000 (evaluated 13012): prefill   990.0 tok/s  ttft  13.14s  decode   38.2 tok/s (400 tok)
+prose  depth  16000 (evaluated 1020): prefill   846.4 tok/s  ttft   1.21s  decode   38.0 tok/s (400 tok)
+bash   depth  16000 (evaluated 1024): prefill   852.9 tok/s  ttft   1.20s  decode   38.2 tok/s (400 tok)
+mean decode 38.1 tok/s
+== depth 32000
+code   depth  32000 (evaluated 17032): prefill   866.8 tok/s  ttft  19.65s  decode   36.2 tok/s (400 tok)
+prose  depth  32000 (evaluated 1020): prefill   731.9 tok/s  ttft   1.39s  decode   36.1 tok/s (400 tok)
+bash   depth  32000 (evaluated 1024): prefill   739.0 tok/s  ttft   1.39s  decode   36.1 tok/s (400 tok)
+mean decode 36.1 tok/s
+== depth 60000
+code   depth  60000 (evaluated 28933): prefill   717.2 tok/s  ttft  40.34s  decode   33.6 tok/s (400 tok)
+prose  depth  60000 (evaluated 1020): prefill   599.6 tok/s  ttft   1.70s  decode   33.5 tok/s (400 tok)
+bash   depth  60000 (evaluated 1024): prefill   599.2 tok/s  ttft   1.71s  decode   33.5 tok/s (400 tok)
+mean decode 33.5 tok/s

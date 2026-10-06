@@ -1,0 +1,9 @@
+=== ub2048 probe 2026-10-05 20:19 engine f0c1cda47
+U1024 health=1 vram_used=11339 MiB
+U1024 (ub 1024, 40960 cells) prefill 16.8k: 1087 / 1103 tok/s; vram after 11513 MiB
+U2048 health=1 vram_used=11595 MiB
+U2048 (ub 2048, 31600 cells) prefill 16.8k: 1148 / 1166 tok/s; vram after 11859 MiB
+U2048 identity vs serial dump: 3 of 3 identical
+=== product start 2026-10-05 20:21 engine f0c1cda47: inner health=1 vram=11459 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+=== done 20:21

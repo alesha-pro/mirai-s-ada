@@ -1,0 +1,12 @@
+{"family": "coding", "name": "suite-tar-01", "seed": 1, "arm": "mirai-layer", "ok": false, "detail": ["hidden1:result_schema", "hidden2:result_schema"], "tokens": 23074, "responses": 12, "terminal": "response_cap", "wall_s": 347.8}
+{"family": "coding", "name": "suite-tar-01", "seed": 2, "arm": "mirai-layer", "ok": true, "detail": [], "tokens": 4012, "responses": 4, "terminal": "natural_stop", "wall_s": 61.9}
+{"family": "coding", "name": "suite-tar-01", "seed": 3, "arm": "mirai-layer", "ok": true, "detail": [], "tokens": 36615, "responses": 12, "terminal": "response_cap", "wall_s": 552.3}
+{"family": "coding", "name": "suite-tar-01", "seed": 4, "arm": "mirai-layer", "ok": true, "detail": [], "tokens": 5011, "responses": 12, "terminal": "response_cap", "wall_s": 84.0}
+{"family": "coding", "name": "xfer-zip-01", "seed": 1, "arm": "mirai-layer", "ok": true, "detail": [], "tokens": 9236, "responses": 11, "terminal": "natural_stop", "wall_s": 143.1}
+{"family": "coding", "name": "xfer-zip-01", "seed": 2, "arm": "mirai-layer", "ok": true, "detail": [], "tokens": 6311, "responses": 12, "terminal": "natural_stop", "wall_s": 104.0}
+{"family": "coding", "name": "xfer-zip-01", "seed": 3, "arm": "mirai-layer", "ok": true, "detail": [], "tokens": 6545, "responses": 12, "terminal": "natural_stop", "wall_s": 107.6}
+{"family": "coding", "name": "xfer-zip-01", "seed": 4, "arm": "mirai-layer", "ok": true, "detail": [], "tokens": 6122, "responses": 9, "terminal": "natural_stop", "wall_s": 98.6}
+{"family": "coding", "name": "xfer-mime-01", "seed": 1, "arm": "mirai-layer", "ok": false, "detail": ["hidden1:subject", "hidden2:date"], "tokens": 42354, "responses": 12, "terminal": "response_cap", "wall_s": 621.6}
+{"family": "coding", "name": "xfer-mime-01", "seed": 2, "arm": "mirai-layer", "ok": false, "detail": ["hidden1:result_schema", "hidden2:result_schema"], "tokens": 17123, "responses": 12, "terminal": "response_cap", "wall_s": 257.8}
+{"family": "coding", "name": "xfer-mime-01", "seed": 3, "arm": "mirai-layer", "ok": false, "detail": ["hidden1:result_schema", "hidden2:date"], "tokens": 30806, "responses": 12, "terminal": "response_cap", "wall_s": 451.8}
+{"family": "coding", "name": "xfer-mime-01", "seed": 4, "arm": "mirai-layer", "ok": false, "detail": ["hidden1:result_schema", "hidden2:result_schema"], "tokens": 36808, "responses": 12, "terminal": "response_cap", "wall_s": 575.9}

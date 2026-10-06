@@ -1,0 +1,1124 @@
+diff --git a/tests/test-backend-ops.cpp b/tests/test-backend-ops.cpp
+index 6527049ff..c3b419444 100644
+--- a/tests/test-backend-ops.cpp
++++ b/tests/test-backend-ops.cpp
+@@ -4672,6 +4672,71 @@ struct test_rwkv_wkv6 : public test_case {
+ };
+ 
+ // GGML_OP_GATED_DELTA_NET
++// GGML_OP_MIRAI_QUANTIZE + GGML_OP_MIRAI_MUL_MAT, on random codes (every bit pattern is a valid trellis tape)
++struct test_mirai_s : public test_case {
++    const ggml_type type;
++    const int64_t k;
++    const int64_t n;
++    const int64_t t;
++
++    std::string vars() override {
++        return VARS_TO_STR4(type, k, n, t);
++    }
++
++    test_mirai_s(ggml_type type = GGML_TYPE_MS_V4T8, int64_t k = 5120, int64_t n = 64, int64_t t = 1)
++        : type(type), k(k), n(n), t(t) {}
++
++    double max_nmse_err() override {
++        return 1e-6;
++    }
++
++    // the quantized input is an opaque blob whose int8 codes may differ by one at rounding ties: compare the output
++    bool run_whole_graph() override { return true; }
++
++    ggml_tensor * build_graph(ggml_context * ctx) override {
++        const bool head = type == GGML_TYPE_MS_I3;
++        const int64_t order = k == 5120 ? 5 : k == 6144 ? 3 : 17;
++        ggml_tensor * w     = ggml_new_tensor_2d(ctx, type, k, n);
++        ggml_tensor * x     = ggml_new_tensor_2d(ctx, GGML_TYPE_F32, k, t);
++        ggml_tensor * rot   = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, head ? k : k + order * order);
++        ggml_tensor * scale = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, n);
++        ggml_set_name(w, "w");
++        ggml_set_name(x, "x");
++        ggml_set_name(rot, "rot");
++        ggml_set_name(scale, "scale");
++        ggml_tensor * xq = ggml_mirai_quantize(ctx, x, rot, head);
++        if (head) {
++            ggml_tensor * ladder = ggml_new_tensor_1d(ctx, GGML_TYPE_F32, 16);
++            ggml_set_name(ladder, "ladder");
++            return ggml_mirai_mul_mat(ctx, w, xq, scale, ladder, nullptr);
++        }
++        static const float codebook[5] = { 0.052f, -0.082f, -0.078f, -0.078f, -0.081f };
++        return ggml_mirai_mul_mat(ctx, w, xq, scale, nullptr, codebook);
++    }
++
++    void initialize_tensors(ggml_context * ctx) override {
++        std::mt19937 rng(1234);
++        for (ggml_tensor * tensor = ggml_get_first_tensor(ctx); tensor != nullptr; tensor = ggml_get_next_tensor(ctx, tensor)) {
++            if (ggml_is_mirai_s(tensor->type)) {
++                std::vector<uint8_t> bytes(ggml_nbytes(tensor));
++                for (auto & b : bytes) {
++                    b = static_cast<uint8_t>(rng());
++                }
++                ggml_backend_tensor_set(tensor, bytes.data(), 0, bytes.size());
++            } else if (strcmp(tensor->name, "rot") == 0) {
++                std::vector<float> rot(ggml_nelements(tensor));
++                std::uniform_real_distribution<float> dist(-0.6f, 0.6f);
++                for (int64_t i = 0; i < (int64_t) rot.size(); ++i) {
++                    rot[i] = i < k ? ((rng() & 1) ? 1.0f : -1.0f) : dist(rng);
++                }
++                ggml_backend_tensor_set(tensor, rot.data(), 0, rot.size() * sizeof(float));
++            } else if (tensor->op == GGML_OP_NONE) {
++                init_tensor_uniform(tensor, strcmp(tensor->name, "scale") == 0 ? 0.5f : -1.0f, 1.0f);
++            }
++        }
++    }
++};
++
+ struct test_gated_delta_net : public test_case {
+     const ggml_type type;
+ 
+@@ -10960,6 +11025,22 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
+         }
+     }
+ 
++    // single-token decode with GQA head packing in the vector kernel: quantized and f16 K/V, GQA ratios 2-12
++    for (int hs : { 64, 128, 256 }) {
++        for (int nr2 : { 2, 3, 4, 6, 8, 12 }) {
++            for (bool mask : { true, false }) {
++                for (bool sinks : { false, true }) {
++                    for (int kv : { 512, 4096 }) {
++                        for (ggml_type type_KV : { GGML_TYPE_Q8_0, GGML_TYPE_Q4_0, GGML_TYPE_F16 }) {
++                            test_cases.emplace_back(new test_flash_attn_ext(
++                                hs, hs, 4, {nr2, 1}, kv, 1, mask, sinks, 0.0f, 0.0f, GGML_PREC_F32, type_KV, type_KV));
++                        }
++                    }
++                }
++            }
++        }
++    }
++
+     // asymmetric head_dim (hsk != hsv) with one or both sides not 64-aligned
+     test_cases.emplace_back(new test_flash_attn_ext(72, 64, 4, {1, 1}, 256, 2, true, false, 0, 0, GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16));
+     test_cases.emplace_back(new test_flash_attn_ext(64, 72, 4, {1, 1}, 256, 2, true, false, 0, 0, GGML_PREC_F32, GGML_TYPE_F16, GGML_TYPE_F16));
+@@ -11162,6 +11243,18 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
+     test_cases.emplace_back(new test_moe_reduce(2048, 15, 40, false, true));
+     test_cases.emplace_back(new test_moe_reduce(2048, 16, 32, false, true));
+ 
++    // Mirai S: 1 token (gemv), <= 16 (split quantize, mma n8/n16), <= 384 (transform, mma n32/n64), longer (cuBLAS)
++    for (int64_t t : { 1, 5, 16, 33, 100, 400 }) {
++        test_cases.emplace_back(new test_mirai_s(GGML_TYPE_MS_V4T8, 5120,  96, t));
++        test_cases.emplace_back(new test_mirai_s(GGML_TYPE_MS_V4T8, 17408, 64, t));
++        test_cases.emplace_back(new test_mirai_s(GGML_TYPE_MS_V2T4, 17408, 64, t));
++        test_cases.emplace_back(new test_mirai_s(GGML_TYPE_MS_V2T6, 5120,  64, t));
++        test_cases.emplace_back(new test_mirai_s(GGML_TYPE_MS_V2T6, 6144,  128, t));
++    }
++    for (int64_t t : { 1, 3, 40 }) {
++        test_cases.emplace_back(new test_mirai_s(GGML_TYPE_MS_I3, 5120, 512, t));
++    }
++
+     test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 32, 128, 1, 1));
+     test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 32, 16, 1, 1));
+     test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 32, 16, 1, 1, 1, true, true));
+@@ -11190,6 +11283,18 @@ static std::vector<std::unique_ptr<test_case>> make_test_cases_eval() {
+     test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 4, 64, 200, 1));
+     test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 4, 64, 127, 2));
+     test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 4, 64,  64, 1, 1, false, true));
++    // CUDA chunked prefill kernel: Qwen3.5 head size, q/k broadcast to 3x the V heads, chunk tails, two sequences
++    test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 4, 128,   64, 1, 3));
++    test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 4, 128,  100, 1, 3));
++    test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 4, 128,  513, 1, 3));
++    test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 2, 128, 2048, 1, 3));
++    test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 4, 128,  200, 2, 1));
++    test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 4, 128,  150, 1, 1, true));
++    test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 4,  64,  300, 2, 2));
++    // chunked prefill + token-by-token tail that writes the rollback snapshots (MTP)
++    test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 4, 128,  100, 1, 3, false, false, 4));
++    test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 4, 128,   68, 1, 1, false, false, 4));
++    test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 4,  64,  200, 2, 1, false, false, 3));
+     test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 4, 64,  33, 1, 1, false, true));
+     test_cases.emplace_back(new test_gated_delta_net(GGML_TYPE_F32, 4, 64, 100, 1, 1, false, true));
+ 
+diff --git a/tools/mirai-s/LICENSE-mirai_s-plugin b/tools/mirai-s/LICENSE-mirai_s-plugin
+new file mode 100644
+index 000000000..f938136e3
+--- /dev/null
++++ b/tools/mirai-s/LICENSE-mirai_s-plugin
+@@ -0,0 +1,202 @@
++
++                                 Apache License
++                           Version 2.0, January 2004
++                        http://www.apache.org/licenses/
++
++   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
++
++   1. Definitions.
++
++      "License" shall mean the terms and conditions for use, reproduction,
++      and distribution as defined by Sections 1 through 9 of this document.
++
++      "Licensor" shall mean the copyright owner or entity authorized by
++      the copyright owner that is granting the License.
++
++      "Legal Entity" shall mean the union of the acting entity and all
++      other entities that control, are controlled by, or are under common
++      control with that entity. For the purposes of this definition,
++      "control" means (i) the power, direct or indirect, to cause the
++      direction or management of such entity, whether by contract or
++      otherwise, or (ii) ownership of fifty percent (50%) or more of the
++      outstanding shares, or (iii) beneficial ownership of such entity.
++
++      "You" (or "Your") shall mean an individual or Legal Entity
++      exercising permissions granted by this License.
++
++      "Source" form shall mean the preferred form for making modifications,
++      including but not limited to software source code, documentation
++      source, and configuration files.
++
++      "Object" form shall mean any form resulting from mechanical
++      transformation or translation of a Source form, including but
++      not limited to compiled object code, generated documentation,
++      and conversions to other media types.
++
++      "Work" shall mean the work of authorship, whether in Source or
++      Object form, made available under the License, as indicated by a
++      copyright notice that is included in or attached to the work
++      (an example is provided in the Appendix below).
++
++      "Derivative Works" shall mean any work, whether in Source or Object
++      form, that is based on (or derived from) the Work and for which the
++      editorial revisions, annotations, elaborations, or other modifications
++      represent, as a whole, an original work of authorship. For the purposes
++      of this License, Derivative Works shall not include works that remain
++      separable from, or merely link (or bind by name) to the interfaces of,
++      the Work and Derivative Works thereof.
++
++      "Contribution" shall mean any work of authorship, including
++      the original version of the Work and any modifications or additions
++      to that Work or Derivative Works thereof, that is intentionally
++      submitted to Licensor for inclusion in the Work by the copyright owner
++      or by an individual or Legal Entity authorized to submit on behalf of
++      the copyright owner. For the purposes of this definition, "submitted"
++      means any form of electronic, verbal, or written communication sent
++      to the Licensor or its representatives, including but not limited to
++      communication on electronic mailing lists, source code control systems,
++      and issue tracking systems that are managed by, or on behalf of, the
++      Licensor for the purpose of discussing and improving the Work, but
++      excluding communication that is conspicuously marked or otherwise
++      designated in writing by the copyright owner as "Not a Contribution."
++
++      "Contributor" shall mean Licensor and any individual or Legal Entity
++      on behalf of whom a Contribution has been received by Licensor and
++      subsequently incorporated within the Work.
++
++   2. Grant of Copyright License. Subject to the terms and conditions of
++      this License, each Contributor hereby grants to You a perpetual,
++      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
++      copyright license to reproduce, prepare Derivative Works of,
++      publicly display, publicly perform, sublicense, and distribute the
++      Work and such Derivative Works in Source or Object form.
++
++   3. Grant of Patent License. Subject to the terms and conditions of
++      this License, each Contributor hereby grants to You a perpetual,
++      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
++      (except as stated in this section) patent license to make, have made,
++      use, offer to sell, sell, import, and otherwise transfer the Work,
++      where such license applies only to those patent claims licensable
++      by such Contributor that are necessarily infringed by their
++      Contribution(s) alone or by combination of their Contribution(s)
++      with the Work to which such Contribution(s) was submitted. If You
++      institute patent litigation against any entity (including a
++      cross-claim or counterclaim in a lawsuit) alleging that the Work
++      or a Contribution incorporated within the Work constitutes direct
++      or contributory patent infringement, then any patent licenses
++      granted to You under this License for that Work shall terminate
++      as of the date such litigation is filed.
++
++   4. Redistribution. You may reproduce and distribute copies of the
++      Work or Derivative Works thereof in any medium, with or without
++      modifications, and in Source or Object form, provided that You
++      meet the following conditions:
++
++      (a) You must give any other recipients of the Work or
++          Derivative Works a copy of this License; and
++
++      (b) You must cause any modified files to carry prominent notices
++          stating that You changed the files; and
++
++      (c) You must retain, in the Source form of any Derivative Works
++          that You distribute, all copyright, patent, trademark, and
++          attribution notices from the Source form of the Work,
++          excluding those notices that do not pertain to any part of
++          the Derivative Works; and
++
++      (d) If the Work includes a "NOTICE" text file as part of its
++          distribution, then any Derivative Works that You distribute must
++          include a readable copy of the attribution notices contained
++          within such NOTICE file, excluding those notices that do not
++          pertain to any part of the Derivative Works, in at least one
++          of the following places: within a NOTICE text file distributed
++          as part of the Derivative Works; within the Source form or
++          documentation, if provided along with the Derivative Works; or,
++          within a display generated by the Derivative Works, if and
++          wherever such third-party notices normally appear. The contents
++          of the NOTICE file are for informational purposes only and
++          do not modify the License. You may add Your own attribution
++          notices within Derivative Works that You distribute, alongside
++          or as an addendum to the NOTICE text from the Work, provided
++          that such additional attribution notices cannot be construed
++          as modifying the License.
++
++      You may add Your own copyright statement to Your modifications and
++      may provide additional or different license terms and conditions
++      for use, reproduction, or distribution of Your modifications, or
++      for any such Derivative Works as a whole, provided Your use,
++      reproduction, and distribution of the Work otherwise complies with
++      the conditions stated in this License.
++
++   5. Submission of Contributions. Unless You explicitly state otherwise,
++      any Contribution intentionally submitted for inclusion in the Work
++      by You to the Licensor shall be under the terms and conditions of
++      this License, without any additional terms or conditions.
++      Notwithstanding the above, nothing herein shall supersede or modify
++      the terms of any separate license agreement you may have executed
++      with Licensor regarding such Contributions.
++
++   6. Trademarks. This License does not grant permission to use the trade
++      names, trademarks, service marks, or product names of the Licensor,
++      except as required for reasonable and customary use in describing the
++      origin of the Work and reproducing the content of the NOTICE file.
++
++   7. Disclaimer of Warranty. Unless required by applicable law or
++      agreed to in writing, Licensor provides the Work (and each
++      Contributor provides its Contributions) on an "AS IS" BASIS,
++      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
++      implied, including, without limitation, any warranties or conditions
++      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
++      PARTICULAR PURPOSE. You are solely responsible for determining the
++      appropriateness of using or redistributing the Work and assume any
++      risks associated with Your exercise of permissions under this License.
++
++   8. Limitation of Liability. In no event and under no legal theory,
++      whether in tort (including negligence), contract, or otherwise,
++      unless required by applicable law (such as deliberate and grossly
++      negligent acts) or agreed to in writing, shall any Contributor be
++      liable to You for damages, including any direct, indirect, special,
++      incidental, or consequential damages of any character arising as a
++      result of this License or out of the use or inability to use the
++      Work (including but not limited to damages for loss of goodwill,
++      work stoppage, computer failure or malfunction, or any and all
++      other commercial damages or losses), even if such Contributor
++      has been advised of the possibility of such damages.
++
++   9. Accepting Warranty or Additional Liability. While redistributing
++      the Work or Derivative Works thereof, You may choose to offer,
++      and charge a fee for, acceptance of support, warranty, indemnity,
++      or other liability obligations and/or rights consistent with this
++      License. However, in accepting such obligations, You may act only
++      on Your own behalf and on Your sole responsibility, not on behalf
++      of any other Contributor, and only if You agree to indemnify,
++      defend, and hold each Contributor harmless for any liability
++      incurred by, or claims asserted against, such Contributor by reason
++      of your accepting any such warranty or additional liability.
++
++   END OF TERMS AND CONDITIONS
++
++   APPENDIX: How to apply the Apache License to your work.
++
++      To apply the Apache License to your work, attach the following
++      boilerplate notice, with the fields enclosed by brackets "[]"
++      replaced with your own identifying information. (Don't include
++      the brackets!)  The text should be enclosed in the appropriate
++      comment syntax for the file format. We also recommend that a
++      file or class name and description of purpose be included on the
++      same "printed page" as the copyright notice for easier
++      identification within third-party archives.
++
++   Copyright 2026 Alibaba Cloud
++
++   Licensed under the Apache License, Version 2.0 (the "License");
++   you may not use this file except in compliance with the License.
++   You may obtain a copy of the License at
++
++       http://www.apache.org/licenses/LICENSE-2.0
++
++   Unless required by applicable law or agreed to in writing, software
++   distributed under the License is distributed on an "AS IS" BASIS,
++   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++   See the License for the specific language governing permissions and
++   limitations under the License.
+\ No newline at end of file
+diff --git a/tools/mirai-s/NOTICE b/tools/mirai-s/NOTICE
+new file mode 100644
+index 000000000..74efef0be
+--- /dev/null
++++ b/tools/mirai-s/NOTICE
+@@ -0,0 +1,9 @@
++Mirai S support in this fork
++
++ggml/src/ggml-cuda/mirai-s.cu and ggml/src/ggml-cpu/mirai-s.cpp port the math and CUDA kernels of Mirai Labs'
++mirai_s vLLM plugin, version 0.2.1, shipped in the vllm/ folder of
++https://huggingface.co/trymirai/Qwen3.8-27B-S-experimental under the Apache License 2.0 (text in
++LICENSE-mirai_s-plugin next to this file). The code was rewritten for ggml tensors, the GGUF layout written by
++convert_mirai_s_to_gguf.py, and llama.cpp's graph; the trellis codec and its constants are Mirai's.
++
++The rest of the fork is llama.cpp (https://github.com/ggml-org/llama.cpp, MIT, see LICENSE at the repo root).
+diff --git a/tools/mirai-s/README.md b/tools/mirai-s/README.md
+new file mode 100644
+index 000000000..3ca9bb1e5
+--- /dev/null
++++ b/tools/mirai-s/README.md
+@@ -0,0 +1,160 @@
++# Mirai S in llama.cpp
++
++This fork runs Mirai S Qwen3.8-27B (`trymirai/Qwen3.8-27B-S-experimental`, 2.4-bit QTIP-style trellis) from a GGUF
++that keeps Mirai's compressed codes bit for bit. The weights are not re-quantized to a llama.cpp type. The fork adds
++the model's codec to ggml, and the CUDA kernels are ports of Mirai's vLLM plugin (`mirai_s` 0.2.1, Apache-2.0).
++
++Base: llama.cpp `d834d44e6`.
++
++## Quick start
++
++A ready GGUF (and a vision mmproj) is on Hugging Face:
++[alesha-pro/Qwen3.8-27B-S-mirai-GGUF](https://huggingface.co/alesha-pro/Qwen3.8-27B-S-mirai-GGUF).
++
++```bash
++cmake -B build -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=86 -DCUDAToolkit_ROOT=/usr/local/cuda
++cmake --build build -j --target llama-server
++hf download alesha-pro/Qwen3.8-27B-S-mirai-GGUF --local-dir qwen3.8-s
++
++# 12 GB card, 128K context (q4_0 KV), 11.3 GB peak
++./build/bin/llama-server -m qwen3.8-s/Qwen3.8-27B-S-mirai.gguf -ngl 99 -fa on -np 1 --jinja \
++  -c 131072 -ctk q4_0 -ctv q4_0 -b 1024 -ub 1024
++# 12 GB card, 74K context with q8_0 KV, 11.1 GB peak
++./build/bin/llama-server -m qwen3.8-s/Qwen3.8-27B-S-mirai.gguf -ngl 99 -fa on -np 1 --jinja \
++  -c 73728 -ctk q8_0 -ctv q8_0 -b 1024 -ub 1024
++# 16 GB card, 128K context with MTP speculative decoding, 14.6 GB peak
++./build/bin/llama-server -m qwen3.8-s/Qwen3.8-27B-S-mirai.gguf -ngl 99 -fa on -np 1 --jinja \
++  -c 131072 -ctk q8_0 -ctv q8_0 --spec-type draft-mtp --spec-draft-n-max 3
++# vision with the encoder on the CPU (0 VRAM): add to any line above
++  --mmproj qwen3.8-s/mmproj-Qwen3.8-27B-base-f16.gguf --no-mmproj-offload -t <physical cores>
++```
++
++`-np 1` matters on this hybrid model: every server slot keeps its own DeltaNet state, and the default slot count
++adds about 450 MB (11.7 GB instead of 11.3 GB at 128K), which leaves a 12 GB card almost nothing.
++
++Mirai's checkpoint ships the language model only. The mmproj is the vision encoder of the base Qwen3.8-27B, converted
++with the stock `convert_hf_to_gguf.py --mmproj`; the compressed language model reads its embeddings fine (charts, UI
++text, scene descriptions in my checks).
++
++## Files
++
++| Path | What |
++|---|---|
++| `tools/mirai-s/convert_mirai_s_to_gguf.py` | the `vllm/` folder of the HF repo (sidecar `trellis.mirai` + dense shards) to GGUF |
++| `tools/mirai-s/mirai_s_decode.py` | NumPy reference decoder of the trellis tapes and the rotation |
++| `tools/mirai-s/check_decoder.py` | cross-check of that decoder against lalamo's own decode of the same rows |
++| `ggml/src/ggml-cpu/mirai-s.cpp` | CPU implementation, the reference for the CUDA kernels (layouts and math documented there) |
++| `ggml/src/ggml-cuda/mirai-s.cu` | CUDA kernels |
++| `tests/test-backend-ops.cpp` | `test_mirai_s`: CUDA against CPU on random codes, every path and format |
++| `tools/mirai-s/compare_vllm.py` | greedy continuations and top-5 logprobs against Mirai's vLLM plugin |
++
++## Format
++
++Four ggml types, ids 90-93 (kept away from upstream's range so a GGUF survives rebases):
++
++| Type | Block | Bytes | Use |
++|---|---:|---:|---|
++| `MS_V4T8` | 64 columns | 16 + 1 | most FFN and output projections, ~2 bits/weight |
++| `MS_V2T4` | 64 | 16 + 2 | layers 0 and a few others, ~2 bits/weight |
++| `MS_V2T6` | 128 | 48 + 2 | attention and DeltaNet input projections, ~3 bits/weight |
++| `MS_I3` | 128 | 48 + 1 | the output head, 3-bit codes with a 16-step ladder per 64 columns |
++
++Rows are grouped by 32 and interleaved (lane = row), so a warp's packet load is one 512-byte read. Every trellis
++weight has `<name>.scale` (F32, one value per output row). Model-wide tensors: `mirai.rot.{5120,6144,17408}` (input
++signs + small_q of the rotation), `mirai.head_aux` (head input signs + ladder), KV `mirai.codebook.v4/v2`.
++
++Two layout differences from stock Qwen3.5 GGUFs:
++
++- Full-attention `q_proj` is split into `attn_q` (queries) and `attn_gate` (output gate): Mirai stores the gate rows in
++  their own trellis block, sometimes in another format.
++- DeltaNet `ssm_out` keeps the checkpoint's grouped V-head column order; the graph permutes its input instead.
++
++`ssm_alpha/beta` (48 rows) are decoded to F16, `token_embd` (Mirai's D4 embedding) to F16 on the CPU side, and the MTP
++block (bf16 in the checkpoint) is written as Q8_0.
++
++## Kernels
++
++Each trellis matmul is `ggml_mirai_quantize` (rotate the input, quantize it per token to two int8 planes, q0 + q1/254)
++followed by `ggml_mirai_mul_mat`. Inputs shared by several weights are quantized once per graph.
++
++| Tokens | Path |
++|---|---|
++| 1 | dp4a GEMV, trellis decoded in registers |
++| 2-384 | int8 tensor-core MMA (m16n8k32) on decoded 64-column slabs, 8-64 tokens per CTA |
++| > 384 | weights decoded to int8 levels in 32 MiB chunks, cuBLASLt int8 GEMM, output epilogue |
++| head | fp16 tensor-core MMA against `H32(signs * x)` |
++
++All three trellis paths compute the same exact int32 dot products, so a token's output does not depend on its batch.
++Tunables for experiments: `GGML_MIRAI_MMA_TOKENS` (384), `GGML_MIRAI_SPLIT_TOKENS` (16), `GGML_MIRAI_LEVELS_MIB` (32).
++
++## Long context and agent turns
++
++Three changes outside the codec, each with a switch to get upstream behavior back:
++
++| Change | Files | Off switch |
++|---|---|---|
++| FA vector kernel packs the Q heads of one K/V head (GQA) into a block | `ggml/src/ggml-cuda/fattn-vec.cuh` | `GGML_CUDA_FA_VEC_GQA=0` |
++| Chunked gated delta rule for prefill | `ggml/src/ggml-cuda/gated_delta_net.cu` | `GGML_CUDA_GDN_CHUNKED=0` |
++| Prompt cache matched by text where the tokens differ | `tools/server/server-common.cpp`, `server-context.cpp` | `LLAMA_SERVER_TEXT_ALIGN=0` |
++
++- **Decode with q8_0/q4_0 KV.** On Ampere, single-token attention over a quantized cache goes to the vector kernel,
++  one block per Q head, so with GQA 6:1 every K/V row was read six times. The kernel takes a second column dimension
++  (`ncols2`, heads of the group) and reads each row once; each KQ dot uses 16 threads instead of 32, halving the
++  reduction shuffles that bound it. Quantized K/V only (f16 keeps the MMA kernel). q8_0 decode at 64K context:
++  18.0 → 24.8 tok/s, 32K: 23.3 → 27.8 (220 W). Remaining cost: ~400 µs per layer at 64K against ~170 µs of pure
++  reads, the kernel is bound by L1/shuffle traffic at 17% occupancy (255 registers).
++- **Prefill.** The token-by-token DeltaNet kernel took ~15% of prefill (8.6 ms per layer per 2048 tokens). The chunked
++  kernel follows FLA's `chunk_gated_delta_rule` in fp32: chunks of 32 tokens, `(I + A) Δ = β(V − D K S0)` solved by
++  forward substitution, one block per head and 32-column slice of the state. Used for ≥ 64 tokens; with rollback
++  snapshots (MTP) the last K tokens go through the old kernel, which writes the snapshots. Prefill of 6144 tokens:
++  694 → 816 tok/s (220 W).
++- **Prompt cache.** With sampling, the model now and then emits a token split that re-tokenizing the same text does not
++  give (about one in a thousand tokens: `" Birds"+"ong"` for `" Bird"+"song"`, emoji bytes). The next request's
++  re-rendered history then diverges from the cache there, and a hybrid model can only roll back to a checkpoint, so
++  after a long answer the next agent turn re-prefilled everything since the previous prompt (30-54K tokens). The server now walks such spans piece by piece and, where the
++  text is equal, takes the cached tokens for the prompt (control and user-defined tokens must match exactly).
++
++## Build and convert
++
++```bash
++cmake -B build -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=86 \
++  -DCUDAToolkit_ROOT=/usr/local/cuda -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc
++cmake --build build -j --target llama-server llama-bench test-backend-ops
++
++python3 tools/mirai-s/convert_mirai_s_to_gguf.py <hf-repo>/vllm --outfile Qwen3.8-27B-S-mirai.gguf \
++  --verify-base <bf16 Qwen3.8-27B>   # optional: correlates decoded rows with the base model
++
++```
++
++Link against CUDA 12 cuBLASLt: with cuBLAS 11 the int8 GEMM falls back to a tile that is about half as fast.
++
++## Verification
++
++- Decoder: `layers.10.mlp.down_proj` from the sidecar equals lalamo's decode of the same rows to 3e-8 (relative L2).
++- Converter: all 416 trellis matrices correlate with the bf16 base model's rows at 0.92-0.99 (by format: V2T6 0.985,
++  V4T8 0.953, V2T4 0.935 mean), so every row lands in the right place.
++- Kernels: `test-backend-ops -o 'MIRAI.*'`, 33/33 (gemv, mma n8-n64, cuBLASLt path, all formats, head).
++- End to end: greedy continuations of 8 prompts (English, code, Russian, SQL, arithmetic), 48 tokens each, are
++  identical to Mirai's vLLM plugin, with and without MTP; top-5 logprobs overlap fully, max gap 0.056
++  (`tools/mirai-s/compare_vllm.py`).
++- Long-context changes: `test-backend-ops -o FLASH_ATTN_EXT` passes with new single-token cases for GQA 2-12 and
++  q8_0/q4_0/f16 K/V; `-o GATED_DELTA_NET` 46/46 with chunked cases (chunk tails, head 128 with q/k broadcast, 2048
++  tokens, rollback snapshots). Greedy vs vLLM with 2 long prompts: 10/10 identical with the changes off, 8/10 with GQA
++  packing (the Russian prompt splits at a 0.0007 logprob tie), 9/10 with chunked prefill.
++
++## Speed and VRAM (one RTX 3090 at 300 W)
++
++llama-server, Mirai's `speedcheck.py` (6.9K-token prompt) and a long-prompt script, peak VRAM from `nvidia-smi`:
++
++| Setup | Peak VRAM | Decode, fresh chat | Decode at 62K | Prefill |
++|---|---:|---:|---:|---:|
++| 128K, q4_0 KV, `-ub 1024` | 11.3 GB | 39.7 tok/s | 34.6 tok/s | 1008 tok/s |
++| 74K, q8_0 KV, `-ub 1024` | 11.1 GB | 40.0 tok/s | 34.9 tok/s | 1009 tok/s |
++| 128K, q8_0 KV, MTP 3 | 14.6 GB | 85 code / 57 prose | | 806 tok/s |
++
++The 128K q4_0 setup decodes 30.4 tok/s at 117K. On the same card at 300 W, Mirai's vLLM plugin (0.2.1) is faster on
++short prompts: 44 vs 39 tok/s decode, 1336 vs 1120 prefill, 107 vs 84 on code with MTP 3. In a 12 GB budget it fits
++37.6K tokens of context with bf16 KV and 74.4K with fp8 KV.
++
++The long-context changes, each against its off switch on the same binary (llama-bench, q8_0 KV): decode at 64K
++27.9 → 35.2 tok/s (q4_0 KV 26.6 → 34.8), prefill of 2048 tokens 1103 → 1225 tok/s.
+diff --git a/tools/mirai-s/check_decoder.py b/tools/mirai-s/check_decoder.py
+new file mode 100644
+index 000000000..b067ed873
+--- /dev/null
++++ b/tools/mirai-s/check_decoder.py
+@@ -0,0 +1,62 @@
++"""Cross-check mirai_s_decode against the lalamo package's own parametrization of the same weights.
++
++Decodes the same rows of one layer from the vLLM sidecar (packets, computed codebook, rowscale) and from the lalamo
++model.safetensors (tape, stored table, scale * gain, post gain; the smatvec extract_leaf decoder) and compares.
++"""
++import argparse
++import json
++import sys
++
++import numpy as np
++from safetensors import safe_open
++
++import mirai_s_decode as md
++
++ap = argparse.ArgumentParser()
++ap.add_argument("--sidecar", required=True)
++ap.add_argument("--lalamo-dir", required=True, help="dir holding smatvec's extract_leaf.py")
++ap.add_argument("--vllm-key", default="layers.10.mlp.down_proj")
++ap.add_argument("--lalamo-leaf", default="decoder.transformer.layers.10.mlp.down_projection.weights")
++ap.add_argument("--rows", type=int, default=64)
++args = ap.parse_args()
++
++sys.path.insert(0, args.lalamo_dir)
++import extract_leaf as el  # noqa: E402
++
++f = safe_open(args.sidecar, "np")
++meta = json.loads(f.metadata()["layers"])[args.vllm_key]
++assert not meta["has_perm"] and len(meta["blocks"]) == 1, meta
++fmt = meta["blocks"][0]["format"]
++v, t, steps, words, edt = md.FORMATS[fmt]
++cols = meta["in_features"]
++p = cols // (steps * v)
++packets = f.get_tensor(f"{args.vllm_key}.0.packets")
++entries = f.get_tensor(f"{args.vllm_key}.0.entries").view(edt)
++rowscale = f.get_tensor(f"{args.vllm_key}.0.rowscale")
++g = rowscale.size // 32
++packets = packets.reshape(g, p, words, 32, 16).transpose(0, 3, 1, 2, 4).reshape(g * 32, p, words, 16)
++entries = entries.reshape(g, p, 32).transpose(0, 2, 1).reshape(g * 32, p)
++n = args.rows
++codebook = f.get_tensor(f"codebook.{fmt[:2]}")
++w_rot = md.rotated_rows(fmt, packets[:n], entries[:n], rowscale[:n], codebook)
++signs = f.get_tensor(f"rotation.signs_{cols}")
++q = f.get_tensor(f"rotation.q_{cols}")
++w_side = md.unrotate(w_rot, signs, q)
++
++# lalamo: same rows, exact f64 decode of its own parametrization
++pkg = el.Package(el.MODEL)
++spec, shape = pkg.leaves()[args.lalamo_leaf]
++codes = pkg.get(args.lalamo_leaf + ".codes")[:n]
++st = el.states(spec, codes, cols)
++table = pkg.get(f"qtip_shared.codebook_v{spec['vector_width']}").astype(np.float64)
++vals = table[st].reshape(n, cols)
++sc = pkg.get(args.lalamo_leaf + ".scales").astype(np.float64)[:n]
++gn = pkg.get(args.lalamo_leaf + ".gains").astype(np.float64)[:n]
++pg = pkg.get(args.lalamo_leaf + ".post_gains.0").astype(np.float64)[:n]
++lal_rot = vals * sc[:, None] * gn[:, None] * pg[:, None]
++w_lal = md.unrotate(lal_rot, pkg.get(f"qtip_shared.signs_{cols}"), pkg.get(f"qtip_shared.q_{cols}"))
++
++rel_rot = np.linalg.norm(w_rot - lal_rot) / np.linalg.norm(lal_rot)
++rel = np.linalg.norm(w_side - w_lal) / np.linalg.norm(w_lal)
++print(json.dumps({"key": args.vllm_key, "format": fmt, "rows": n, "rel_l2_rotated": rel_rot, "rel_l2_weights": rel,
++                  "max_abs": float(np.abs(w_side - w_lal).max()), "max_weight": float(np.abs(w_lal).max())}))
+diff --git a/tools/mirai-s/compare_vllm.py b/tools/mirai-s/compare_vllm.py
+new file mode 100644
+index 000000000..7684571e5
+--- /dev/null
++++ b/tools/mirai-s/compare_vllm.py
+@@ -0,0 +1,88 @@
++#!/usr/bin/env python3
++"""Greedy continuations of the same token ids from Mirai's vLLM plugin and the mirai-s llama.cpp fork (or a second
++vLLM server, --vllm-b).
++
++Both run the same compressed weights, so the continuations should agree token for token until a near-tie; the report
++gives the length of the common prefix and, at the first position, the top-5 overlap and the logprob gap.
++
++  python3 compare_vllm.py --vllm http://localhost:18293 --llama http://localhost:18400
++"""
++import argparse
++import json
++import math
++import urllib.request
++
++PROMPTS = [
++    "The capital of France is",
++    "def fibonacci(n):\n    \"\"\"Return the n-th Fibonacci number.\"\"\"\n",
++    "Photosynthesis is the process by which",
++    "Q: What is 17 * 23?\nA:",
++    "Once upon a time, in a small village by the sea,",
++    "В 1961 году Юрий Гагарин",
++    "The three laws of thermodynamics are",
++    "SELECT name, COUNT(*) FROM orders",
++]
++# long prompts (~7k tokens, the speedcheck log): compressed KV caches differ from bf16 most with a long context
++LOG = "\n".join(f"Entry {i}: station {i % 23} logged {i * 37 % 101} crates of item {i * 13 % 29}." for i in range(330))
++LONG_PROMPTS = [
++    LOG + "\n\nQuestion: how many crates did entry 17 log, and at which station? Answer:",
++    LOG + "\n\nWhich item numbers appear most often in the log above? Explain briefly. Answer:",
++]
++
++
++def post(url: str, body: dict) -> dict:
++    req = urllib.request.Request(url, json.dumps(body).encode(), {"Content-Type": "application/json"})
++    with urllib.request.urlopen(req, timeout=600) as r:
++        return json.loads(r.read())
++
++
++def main() -> None:
++    ap = argparse.ArgumentParser()
++    ap.add_argument("--vllm", default="http://localhost:18293")
++    ap.add_argument("--llama", default="http://localhost:18400")
++    ap.add_argument("--vllm-b", help="compare against a second vLLM server instead of llama-server")
++    ap.add_argument("--model", default="qwen3.8-s")
++    ap.add_argument("--tokens", type=int, default=48)
++    ap.add_argument("--long", action="store_true", help="add the two ~7k-token prompts")
++    args = ap.parse_args()
++
++    summary = []
++    for prompt in PROMPTS + (LONG_PROMPTS if args.long else []):
++        ids = post(f"{args.vllm}/tokenize", {"model": args.model, "prompt": prompt})["tokens"]
++        v = post(f"{args.vllm}/v1/completions", {
++            "model": args.model, "prompt": ids, "max_tokens": args.tokens, "temperature": 0, "logprobs": 5,
++            "return_tokens_as_token_ids": True})["choices"][0]
++        v_ids = [int(t.split(":")[1]) for t in v["logprobs"]["tokens"]]
++        v_top = {int(k.split(":")[1]): lp for k, lp in v["logprobs"]["top_logprobs"][0].items()}
++
++        if args.vllm_b:
++            b = post(f"{args.vllm_b}/v1/completions", {
++                "model": args.model, "prompt": ids, "max_tokens": args.tokens, "temperature": 0, "logprobs": 5,
++                "return_tokens_as_token_ids": True})["choices"][0]
++            l_ids = [int(t.split(":")[1]) for t in b["logprobs"]["tokens"]]
++            l_top = {int(k.split(":")[1]): lp for k, lp in b["logprobs"]["top_logprobs"][0].items()}
++        else:
++            l = post(f"{args.llama}/completion", {
++                "prompt": ids, "n_predict": args.tokens, "temperature": 0, "top_k": 1, "n_probs": 5,
++                "cache_prompt": False, "return_tokens": True, "samplers": ["top_k"]})
++            l_ids = l["tokens"]
++            l_top = {t["id"]: t["logprob"] for t in l["completion_probabilities"][0]["top_logprobs"]}
++
++        common = 0
++        while common < min(len(v_ids), len(l_ids)) and v_ids[common] == l_ids[common]:
++            common += 1
++        shared = set(v_top) & set(l_top)
++        gap = max((abs(v_top[t] - l_top[t]) for t in shared), default=float("nan"))
++        p_v = {t: math.exp(lp) for t, lp in v_top.items()}
++        rec = {"prompt": prompt[:40] if len(prompt) < 200 else "LONG ..." + prompt[-40:], "prompt_tokens": len(ids), "common_prefix": common, "of": min(len(v_ids), len(l_ids)),
++               "top5_overlap": len(shared), "max_logprob_gap_top5": round(gap, 4),
++               "vllm_top1_p": round(max(p_v.values()), 4)}
++        summary.append(rec)
++        print(json.dumps(rec, ensure_ascii=False), flush=True)
++    full = sum(r["common_prefix"] == r["of"] for r in summary)
++    print(json.dumps({"prompts": len(summary), "identical_continuations": full,
++                      "mean_common_prefix": sum(r["common_prefix"] for r in summary) / len(summary)}))
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/tools/mirai-s/convert_mirai_s_to_gguf.py b/tools/mirai-s/convert_mirai_s_to_gguf.py
+new file mode 100644
+index 000000000..901dc3706
+--- /dev/null
++++ b/tools/mirai-s/convert_mirai_s_to_gguf.py
+@@ -0,0 +1,331 @@
++#!/usr/bin/env python3
++"""Convert Mirai S Qwen3.8-27B (the `vllm/` folder of trymirai/Qwen3.8-27B-S-experimental) to GGUF for the mirai-s
++llama.cpp fork.
++
++The trellis matrices keep Mirai's compressed codes bit for bit. Their 32-row interleaved packets (the layout of Mirai's
++vLLM plugin) are regrouped into llama.cpp's tensors: the row order of every tensor is learned by running the stock
++Qwen3.5 converter on row-index probe tensors, so any row permutation it applies (V-head reordering) is reproduced
++exactly. The stock converter also handles every dense tensor (norms, conv, A_log, dt_bias, the MTP block).
++
++Written per model:
++  blk.N.<proj>.weight   MS_V4T8 / MS_V2T4 / MS_V2T6   compressed rows, opaque 32-row interleaved layout
++  blk.N.<proj>.scale    F32 [rows]                   Mirai's per-row scale
++  blk.N.attn_gate       (full attention)             the output-gate rows of q_proj, split off attn_q because Mirai
++                                                     stores them in their own trellis block
++  blk.N.ssm_alpha/beta  F16                          48-row gates, decoded (rows are not a multiple of 32)
++  output.weight         MS_I3                        the 3-bit head; output.scale F32 [vocab]
++  token_embd.weight     F16                          the D4 embedding, decoded (lookups run on the CPU)
++  mirai.rot.<K>         F32 [K + order^2]            input rotation: signs, then small_q row-major
++  mirai.head_aux        F32 [n_embd + 16]            head input signs, then the 16-entry ladder
++  KV mirai.codebook.v4/v2 [c, d0, d1, d2, d3]
++The trunk's ssm_out columns stay in checkpoint (grouped V-head) order; the graph permutes its input instead.
++"""
++from __future__ import annotations
++
++import argparse
++import json
++import logging
++import os
++import re
++import sys
++from pathlib import Path
++
++import numpy as np
++import torch
++
++ROOT = Path(__file__).resolve().parents[2]
++sys.path.insert(1, str(ROOT / "gguf-py"))
++sys.path.insert(1, str(ROOT))
++sys.path.insert(1, str(Path(__file__).resolve().parent))
++import gguf  # noqa: E402
++from safetensors import safe_open  # noqa: E402
++
++from conversion.qwen import Qwen3_5TextModel  # noqa: E402
++import mirai_s_decode as md  # noqa: E402
++
++logger = logging.getLogger("mirai-s")
++
++QTYPE = {"v4t8": gguf.GGMLQuantizationType.MS_V4T8, "v2t4": gguf.GGMLQuantizationType.MS_V2T4,
++         "v2t6": gguf.GGMLQuantizationType.MS_V2T6}
++PREFIX = "model.layers."  # after TextModel.filter_tensors drops "language_model."
++
++
++class Sidecar:
++    def __init__(self, path: Path) -> None:
++        self.f = safe_open(str(path), "np")
++        self.layers = json.loads(self.f.metadata()["layers"])
++        self._blocks: dict[tuple[str, int], tuple] = {}
++
++    def get(self, name: str) -> np.ndarray:
++        return self.f.get_tensor(name)
++
++    def _block(self, key: str, index: int):
++        """Block `index` of layer `key` de-interleaved to per-row arrays: packets [rows, P, W, 16], entries [rows, P]."""
++        cache_key = (key, index)
++        if cache_key not in self._blocks:
++            self._blocks.clear()  # one block at a time: they are large
++            meta = self.layers[key]
++            fmt = meta["blocks"][index]["format"]
++            v, _, steps, words, edt = md.FORMATS[fmt]
++            p = meta["in_features"] // (steps * v)
++            rowscale = self.get(f"{key}.{index}.rowscale")
++            g = rowscale.size // 32
++            packets = self.get(f"{key}.{index}.packets").reshape(g, p, words, 32, 16).transpose(0, 3, 1, 2, 4)
++            entries = self.get(f"{key}.{index}.entries").view(edt).reshape(g, p, 32).transpose(0, 2, 1)
++            self._blocks[cache_key] = (fmt, packets.reshape(g * 32, p, words, 16), entries.reshape(g * 32, p), rowscale)
++        return self._blocks[cache_key]
++
++    def rows(self, key: str, out_cols: np.ndarray):
++        """Rows for output columns `out_cols` of vLLM layer `key`: (format, packets, entries, rowscale)."""
++        meta = self.layers[key]
++        perm = self.get(f"{key}.perm").astype(np.int64) if meta["has_perm"] else np.arange(meta["out_features"])
++        internal = perm[out_cols]
++        fmts = set()
++        result_p, result_e, result_s = None, None, np.empty(len(internal), np.float32)
++        for index, block in enumerate(meta["blocks"]):
++            rows_b = self.get(f"{key}.{index}.rowscale").size
++            sel = np.nonzero((internal >= block["offset"]) & (internal < block["offset"] + rows_b))[0]
++            if sel.size == 0:
++                continue
++            fmt, packets, entries, rowscale = self._block(key, index)
++            fmts.add(fmt)
++            local = internal[sel] - block["offset"]
++            if result_p is not None and result_p.shape[1:] != packets.shape[1:]:
++                raise ValueError(f"{key}: rows from mixed formats {fmts}")
++            if result_p is None:
++                result_p = np.empty((len(internal),) + packets.shape[1:], np.uint8)
++                result_e = np.empty((len(internal), entries.shape[1]), entries.dtype)
++            result_p[sel] = packets[local]
++            result_e[sel] = entries[local]
++            result_s[sel] = rowscale[local]
++        assert len(fmts) == 1, f"{key}: rows from mixed formats {fmts}"
++        return fmts.pop(), result_p, result_e, result_s
++
++
++def interleave(packets: np.ndarray, entries: np.ndarray) -> np.ndarray:
++    """Per-row packets [n, P, W, 16] + entries [n, P] -> the opaque tensor bytes, shaped [n, row_bytes] for gguf-py.
++    Each group of 32 rows is self-contained (32 * row_bytes): its packets as [P][W][32 rows][16 B], so a warp with
++    lane = row loads 512 contiguous bytes, then its entry states as [P][32 rows]."""
++    n, p, w, _ = packets.shape
++    assert n % 32 == 0, n
++    g = n // 32
++    pk = packets.reshape(g, 32, p, w, 16).transpose(0, 2, 3, 1, 4).reshape(g, -1)
++    en = entries.astype(entries.dtype.newbyteorder("<")).reshape(g, 32, p).transpose(0, 2, 1).reshape(g, -1)
++    return np.concatenate([pk.view(np.uint8), en.view(np.uint8)], axis=1).reshape(n, -1)
++
++
++class MiraiSQwen35(Qwen3_5TextModel):
++    """Stock Qwen3.5 conversion for dense tensors; trellis tensors are intercepted and written raw."""
++    model_arch = gguf.MODEL_ARCH.QWEN35
++
++    def __init__(self, *args, sidecar: Sidecar, verify_dir: Path | None, verify_rows: int, **kwargs) -> None:
++        self.sidecar = sidecar
++        self.verify_dir = verify_dir
++        self.verify_rows = verify_rows
++        self._probe_cache: dict[str, list] = {}
++        self._raw: list[tuple[str, np.ndarray, gguf.GGMLQuantizationType]] = []
++        self._verify_report: list[dict] = []
++        super().__init__(*args, **kwargs)
++        h = self.hparams
++        n_k, n_v, dk, dv = h["linear_num_key_heads"], h["linear_num_value_heads"], h["linear_key_head_dim"], h["linear_value_head_dim"]
++        qkv_lin = 2 * n_k * dk + n_v * dv
++        q_rows = h["num_attention_heads"] * h["head_dim"] * 2
++        kv_rows = h["num_key_value_heads"] * h["head_dim"]
++        ff = h["intermediate_size"]
++        # HF linear -> (vLLM fused layer, first output column, rows)
++        self.hf2vllm = {
++            "linear_attn.in_proj_qkv": ("linear_attn.in_proj_qkvz", 0, qkv_lin),
++            "linear_attn.in_proj_z": ("linear_attn.in_proj_qkvz", qkv_lin, n_v * dv),
++            "linear_attn.in_proj_b": ("linear_attn.in_proj_ba", 0, n_v),
++            "linear_attn.in_proj_a": ("linear_attn.in_proj_ba", n_v, n_v),
++            "linear_attn.out_proj": ("linear_attn.out_proj", 0, h["hidden_size"]),
++            "self_attn.q_proj": ("self_attn.qkv_proj", 0, q_rows),
++            "self_attn.k_proj": ("self_attn.qkv_proj", q_rows, kv_rows),
++            "self_attn.v_proj": ("self_attn.qkv_proj", q_rows + kv_rows, kv_rows),
++            "self_attn.o_proj": ("self_attn.o_proj", 0, h["hidden_size"]),
++            "mlp.gate_proj": ("mlp.gate_up_proj", 0, ff),
++            "mlp.up_proj": ("mlp.gate_up_proj", ff, ff),
++            "mlp.down_proj": ("mlp.down_proj", 0, h["hidden_size"]),
++        }
++        # register the trellis-backed HF tensors so the stock pipeline hands them to modify_tensors
++        self._trellis_names: set[str] = set()
++        for key in self.sidecar.layers:
++            m = re.match(r"layers\.(\d+)\.(.+)$", key)
++            layer, role = int(m[1]), m[2]
++            for hf, (vkey, _, _) in self.hf2vllm.items():
++                if vkey == role:
++                    name = f"{PREFIX}{layer}.{hf}.weight"
++                    assert name not in self.model_tensors, name
++                    self._trellis_names.add(name)
++                    self.model_tensors[name] = lambda: torch.empty(0)
++
++    def _probe(self, name: str, bid: int, rows: int, cols: int):
++        """[(gguf name template, source HF row of each output row, columns permuted?)] for this kind of tensor."""
++        kind = re.sub(r"layers\.\d+\.", "layers.N.", name)
++        if kind not in self._probe_cache:
++            r = torch.arange(rows, dtype=torch.float32)[:, None].expand(rows, cols).contiguous()
++            c = torch.arange(cols, dtype=torch.float32)[None, :].expand(rows, cols).contiguous()
++            out_r = list(super().modify_tensors(r, name, bid))
++            out_c = list(super().modify_tensors(c, name, bid))
++            result = []
++            for (n1, t1), (n2, t2) in zip(out_r, out_c):
++                assert n1 == n2, (n1, n2)
++                t1, t2 = t1.reshape(t1.shape[0], -1), t2.reshape(t2.shape[0], -1)
++                src_rows = t1[:, 0].long()
++                assert torch.equal(t1, src_rows[:, None].float().expand_as(t1)), f"{name}: rows are not a pure gather"
++                src_cols = t2[0, :].long()
++                assert torch.equal(t2, src_cols[None, :].float().expand_as(t2)), f"{name}: cols are not a pure gather"
++                col_perm = not torch.equal(src_cols, torch.arange(cols))
++                result.append((n1.replace(f"blk.{bid}.", "blk.{bid}."), src_rows.numpy(), col_perm))
++            self._probe_cache[kind] = result
++        return [(tmpl.format(bid=bid), rows_, cp) for tmpl, rows_, cp in self._probe_cache[kind]]
++
++    def modify_tensors(self, data_torch, name, bid):
++        if name not in self._trellis_names:
++            yield from super().modify_tensors(data_torch, name, bid)
++            return
++        m = re.match(re.escape(PREFIX) + r"(\d+)\.(.+)\.weight$", name)
++        layer, hf = int(m[1]), m[2]
++        vrole, first, n_rows = self.hf2vllm[hf]
++        vkey = f"layers.{layer}.{vrole}"
++        cols = self.sidecar.layers[vkey]["in_features"]
++        emitted = []
++        for gname, src_rows, col_perm in self._probe(name, bid, n_rows, cols):
++            if hf == "self_attn.q_proj":
++                # Qwen3.5 interleaves each head's query and output gate, [q | gate] per head. Mirai keeps the queries
++                # and the gates in separate trellis blocks, sometimes of different formats: attn_q + attn_gate.
++                is_gate = (src_rows // self.hparams["head_dim"]) % 2 == 1
++                emitted += [(gname, src_rows[~is_gate], col_perm),
++                            (gname.replace(".attn_q.", ".attn_gate."), src_rows[is_gate], col_perm)]
++            else:
++                emitted.append((gname, src_rows, col_perm))
++        for gname, src_rows, col_perm in emitted:
++            fmt, packets, entries, rowscale = self.sidecar.rows(vkey, first + src_rows)
++            if col_perm:
++                assert hf == "linear_attn.out_proj", f"{name}: unexpected column permutation"
++            if len(src_rows) % 32 != 0:
++                # 48-row gates (ssm_alpha / ssm_beta): decode to dense F16 in llama.cpp's row order
++                w_rot = md.rotated_rows(fmt, packets, entries, rowscale, self.sidecar.get(f"codebook.{fmt[:2]}"))
++                w = md.unrotate(w_rot, self.sidecar.get(f"rotation.signs_{cols}"), self.sidecar.get(f"rotation.q_{cols}"))
++                assert not col_perm
++                self._raw.append((gname, w.astype(np.float16), gguf.GGMLQuantizationType.F16))
++                continue
++            self._raw.append((gname, interleave(packets, entries), QTYPE[fmt]))
++            self._raw.append((gname.replace(".weight", ".scale"), rowscale.astype(np.float32), gguf.GGMLQuantizationType.F32))
++            if self.verify_dir is not None:
++                self._verify(gname, name, fmt, packets, entries, rowscale, src_rows, cols)
++        return
++        yield  # noqa: unreachable, keeps this a generator
++
++    def _verify(self, gname, hf_name, fmt, packets, entries, rowscale, src_rows, cols):
++        """Correlate decoded rows with the base model's bf16 rows (HF order, so columns match the codes)."""
++        k = min(self.verify_rows, len(src_rows))
++        pick = np.linspace(0, len(src_rows) - 1, k).astype(np.int64)
++        w_rot = md.rotated_rows(fmt, packets[pick], entries[pick], rowscale[pick],
++                                self.sidecar.get(f"codebook.{fmt[:2]}"))
++        w = md.unrotate(w_rot, self.sidecar.get(f"rotation.signs_{cols}"), self.sidecar.get(f"rotation.q_{cols}"))
++        base = self._base_rows(hf_name, src_rows[pick])
++        corr = [float(np.corrcoef(a, b)[0, 1]) for a, b in zip(w, base)]
++        ratio = float(np.linalg.norm(w) / np.linalg.norm(base))
++        rec = {"tensor": gname, "format": fmt, "rows": int(len(src_rows)), "corr_min": min(corr),
++               "corr_mean": float(np.mean(corr)), "norm_ratio": ratio}
++        self._verify_report.append(rec)
++        logger.info("verify %s", json.dumps(rec))
++        assert min(corr) > 0.8, f"{gname}: decoded rows do not match the base model ({rec})"
++
++    def _base_rows(self, hf_name: str, rows: np.ndarray) -> np.ndarray:
++        if not hasattr(self, "_base_index"):
++            idx = json.load(open(self.verify_dir / "model.safetensors.index.json"))["weight_map"]
++            self._base_index = idx
++        hf_name = hf_name.replace(PREFIX, "model.language_model.layers.")
++        f = safe_open(str(self.verify_dir / self._base_index[hf_name]), "pt")
++        sl = f.get_slice(hf_name)
++        return np.stack([sl[int(r):int(r) + 1].float().numpy()[0] for r in rows]).astype(np.float64)
++
++    def prepare_tensors(self):
++        super().prepare_tensors()
++        sc = self.sidecar
++        h = self.hparams
++        n_embd = h["hidden_size"]
++        # shared rotations and codebooks
++        for cols in (5120, 6144, 17408):
++            if f"rotation.signs_{cols}" in sc.f.keys():
++                rot = np.concatenate([sc.get(f"rotation.signs_{cols}").astype(np.float32),
++                                      sc.get(f"rotation.q_{cols}").astype(np.float32).reshape(-1)])
++                self._raw.append((f"mirai.rot.{cols}", rot, gguf.GGMLQuantizationType.F32))
++        for v in ("v4", "v2"):
++            self.gguf_writer.add_array(f"mirai.codebook.{v}", [float(x) for x in sc.get(f"codebook.{v}")])
++        self.gguf_writer.add_uint32("mirai.version", 1)
++        # head: interleave codes and ladder nibbles per 32 rows, like the plugin's head_mma
++        codes = sc.get("head.codes")
++        ladder_idx = sc.get("head.ladder_indices")
++        vocab, pairs = codes.shape[0], ladder_idx.shape[1]
++        assert vocab % 32 == 0 and codes.shape[1] == pairs * 48
++        blocks = vocab // 32  # per 32 rows: codes [pair][part][row][16 B], then ladder bytes [pair][row] (head_mma's order)
++        head_codes = codes.reshape(blocks, 32, pairs, 3, 16).transpose(0, 2, 3, 1, 4).reshape(blocks, -1)
++        head_ladder = ladder_idx.reshape(blocks, 32, pairs).transpose(0, 2, 1).reshape(blocks, -1)
++        head = np.concatenate([head_codes, head_ladder], axis=1).reshape(vocab, -1)
++        self._raw.append(("output.weight", head, gguf.GGMLQuantizationType.MS_I3))
++        self._raw.append(("output.scale", sc.get("head.row_scales").astype(np.float32), gguf.GGMLQuantizationType.F32))
++        aux = np.concatenate([sc.get("head.signs").astype(np.float32), sc.get("head.ladder").astype(np.float32)])
++        self._raw.append(("mirai.head_aux", aux, gguf.GGMLQuantizationType.F32))
++        # embedding: decode D4 rows (table[code][col % 4] * row_scale * ladder, H32 per 32 columns, signs) to F16
++        self._raw.append(("token_embd.weight", self._decode_embedding(), gguf.GGMLQuantizationType.F16))
++        for name, data, qtype in self._raw:
++            logger.info("%-40s --> %s, shape = %s", name, qtype.name, data.shape)
++            self.gguf_writer.add_tensor(name, data, raw_dtype=qtype)
++        if self._verify_report:
++            (self.fname_out.parent / (self.fname_out.stem + ".verify.json")).write_text(json.dumps(self._verify_report, indent=1))
++
++    def _decode_embedding(self) -> np.ndarray:
++        sc = self.sidecar
++        codes = sc.get("embedding.codes")
++        table = sc.get("embedding.table").astype(np.float32)
++        row_scales = sc.get("embedding.row_scales").astype(np.float32)
++        ladder = sc.get("embedding.ladder").astype(np.float32)
++        ladder_idx = sc.get("embedding.ladder_indices")
++        signs = sc.get("embedding.signs").astype(np.float32)
++        vocab, n_embd = codes.shape[0], codes.shape[1] * 4
++        out = np.empty((vocab, n_embd), np.float16)
++        groups = n_embd // 64
++        g = np.arange(groups)
++        for start in range(0, vocab, 8192):
++            end = min(vocab, start + 8192)
++            c = codes[start:end]
++            vals = table[c].reshape(end - start, n_embd)  # [rows, cols/4, 4] -> cols
++            li = ladder_idx[start:end][:, g // 2]
++            nib = np.where(g % 2 == 1, li >> 4, li & 15)
++            scale = row_scales[start:end, None] * ladder[nib]  # [rows, groups]
++            x = vals * np.repeat(scale, 64, axis=1)
++            x = md.hadamard32_rows(x.astype(np.float64)) * signs[None, :]
++            out[start:end] = x.astype(np.float16)
++        return out
++
++
++def main() -> None:
++    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
++    ap.add_argument("model", type=Path, help="the vllm/ folder: config.json, tokenizer, dense shards, trellis.mirai")
++    ap.add_argument("--outfile", type=Path, required=True)
++    ap.add_argument("--mtp-type", choices=["q8_0", "bf16", "f16"], default="q8_0", help="type of the dense MTP weights")
++    ap.add_argument("--verify-base", type=Path, help="bf16 Qwen3.8-27B folder: correlate decoded rows with it")
++    ap.add_argument("--verify-rows", type=int, default=8)
++    ap.add_argument("--no-mtp", action="store_true")
++    args = ap.parse_args()
++    logging.basicConfig(level=logging.INFO)
++
++    hparams = MiraiSQwen35.load_hparams(args.model, False)
++    hparams.pop("quantization_config", None)  # the stock loader rejects unknown quant methods
++    hparams["architectures"] = ["Qwen3_5ForCausalLM"]
++    ftype = {"q8_0": gguf.LlamaFileType.MOSTLY_Q8_0, "bf16": gguf.LlamaFileType.MOSTLY_BF16,
++             "f16": gguf.LlamaFileType.MOSTLY_F16}[args.mtp_type]
++    if args.no_mtp:
++        MiraiSQwen35.no_mtp = True
++    model = MiraiSQwen35(args.model, ftype, args.outfile, hparams=hparams, eager=False,
++                         sidecar=Sidecar(args.model / "trellis.mirai"), verify_dir=args.verify_base,
++                         verify_rows=args.verify_rows)
++    model.write()
++    logger.info("wrote %s", args.outfile)
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/tools/mirai-s/mirai_s_decode.py b/tools/mirai-s/mirai_s_decode.py
+new file mode 100644
+index 000000000..2a069e027
+--- /dev/null
++++ b/tools/mirai-s/mirai_s_decode.py
+@@ -0,0 +1,92 @@
++"""NumPy reference decoder for Mirai S trellis tapes (the layout of Mirai's vLLM plugin, kernels.cu).
++
++A trellis row stores, per packet of STEPS * V columns, an entry state and STEPS symbols of T bits packed LSB-first.
++Each step replays state = (state << T | symbol) & 0xFFFF; the codebook is computed from the state:
++    h = fmix32(state * 0xCFCCB83F + 0x584B4AA3),  level(byte b of h) = 8 * pairs(b) + ((3 * (b & 15)) & 15) - 54
++    w_rot[col] = rowscale * (c * level[col] + d[col % 4])
++V4 uses bytes 0-3 of one step's hash, V2 bytes 0-1. The weight row itself is W = signs * (w_rot @ R), with
++R = kron(H_width, Q) / sqrt(width) applied on the [width, order] view of the row (lalamo's full_rotation).
++"""
++import numpy as np
++
++# format -> (V, T, steps per packet, 16-byte words per packet, entry dtype)
++FORMATS = {
++    "v4t8": (4, 8, 16, 1, np.uint8),
++    "v2t4": (2, 4, 32, 1, np.uint16),
++    "v2t6": (2, 6, 64, 3, np.uint16),
++}
++M32 = np.uint64(0xFFFFFFFF)
++
++
++def fmix(state: np.ndarray) -> np.ndarray:
++    x = (state.astype(np.uint64) * np.uint64(0xCFCCB83F) + np.uint64(0x584B4AA3)) & M32
++    x ^= x >> np.uint64(16)
++    x = (x * np.uint64(0x85EBCA6B)) & M32
++    return (x ^ (x >> np.uint64(16))) & M32
++
++
++def levels_plus_54(h: np.ndarray) -> np.ndarray:
++    """Four bytes of level + 54 (0..111) per hash, as [..., 4] uint8."""
++    h = h.astype(np.uint64)
++    nib = (h & np.uint64(0x33333333)) + ((h >> np.uint64(2)) & np.uint64(0x33333333))
++    pairs = (nib + (nib >> np.uint64(4))) & np.uint64(0x0F0F0F0F)
++    lv = ((pairs << np.uint64(3)) + (((h & np.uint64(0x0F0F0F0F)) * np.uint64(3)) & np.uint64(0x0F0F0F0F))) & M32
++    return np.stack([((lv >> np.uint64(8 * j)) & np.uint64(0xFF)).astype(np.uint8) for j in range(4)], axis=-1)
++
++
++def row_levels(fmt: str, packets: np.ndarray, entries: np.ndarray) -> np.ndarray:
++    """packets [n, P, W, 16] uint8 and entries [n, P] -> level + 54 per column, [n, P * STEPS * V] uint8."""
++    v, t, steps, words, _ = FORMATS[fmt]
++    n, p = entries.shape
++    bits = packets.reshape(n, p, words * 16).view(np.uint32).astype(np.uint64)  # [n, P, 4 * W] little-endian words
++    padded = np.concatenate([bits, np.zeros((n, p, 1), np.uint64)], axis=-1)
++    mask = np.uint64((1 << t) - 1)
++    state = entries.astype(np.uint64)
++    out = np.empty((n, p, steps * v), np.uint8)
++    for step in range(steps):
++        bit = step * t
++        word, shift = bit // 32, bit % 32
++        joined = padded[..., word] | (padded[..., word + 1] << np.uint64(32))
++        symbol = (joined >> np.uint64(shift)) & mask
++        state = ((state << np.uint64(t)) | symbol) & np.uint64(0xFFFF)
++        lv = levels_plus_54(fmix(state))
++        out[..., step * v:(step + 1) * v] = lv[..., :v]
++    return out.reshape(n, p * steps * v)
++
++
++def rotated_rows(fmt: str, packets: np.ndarray, entries: np.ndarray, rowscale: np.ndarray,
++                 codebook: np.ndarray) -> np.ndarray:
++    """w_rot [n, K] float64: rowscale * (c * level + d[col % 4])."""
++    lv = row_levels(fmt, packets, entries).astype(np.float64) - 54.0
++    cols = lv.shape[1]
++    d = np.asarray(codebook[1:5], np.float64)[np.arange(cols) % 4]
++    return rowscale.astype(np.float64)[:, None] * (float(codebook[0]) * lv + d[None, :])
++
++
++def fwht_rows(a: np.ndarray) -> np.ndarray:
++    """Unnormalized Walsh-Hadamard on axis -2 of [..., width, order] (lalamo's butterfly order)."""
++    width = a.shape[-2]
++    stride = 1
++    while stride < width:
++        g = a.reshape(*a.shape[:-2], -1, 2, stride, a.shape[-1])
++        left, right = g[..., 0, :, :], g[..., 1, :, :]
++        a = np.concatenate((left + right, left - right), axis=-2).reshape(a.shape)
++        stride *= 2
++    return a
++
++
++def unrotate(w_rot: np.ndarray, signs: np.ndarray, small_q: np.ndarray) -> np.ndarray:
++    """W = signs * (w_rot @ kron(H, Q)) / sqrt(width), rows of w_rot in the [width, order] layout."""
++    n, cols = w_rot.shape
++    order = small_q.shape[0]
++    width = cols // order
++    a = fwht_rows(w_rot.reshape(n, width, order)) / np.sqrt(width)
++    a = a @ small_q.astype(np.float64)
++    return a.reshape(n, cols) * signs.astype(np.float64)[None, :]
++
++
++def hadamard32_rows(x: np.ndarray) -> np.ndarray:
++    """Normalized Walsh-Hadamard on consecutive 32-column blocks of [n, K]."""
++    n, cols = x.shape
++    return fwht_rows(x.reshape(n, cols // 32, 32, 1).transpose(0, 1, 2, 3).reshape(n * cols // 32, 32, 1)) \
++        .reshape(n, cols) / np.sqrt(32.0)

@@ -1,0 +1,90 @@
+=== kl planes 2026-10-05 09:36 engine 4bdc6587b; chunks 8 x 2048 of 495418 chars
+--- base: two planes (product numerics), saving logits
+[1]7.2074,[2]8.5019,[3]6.6300,[4]6.5017,[5]6.6541,[6]6.1202,[7]6.6052,[8]6.8899,
+0.26.257.802 I Final estimate: PPL = 6.8899 +/- 0.19081
+--- candidate: one plane (GGML_MIRAI_PREFILL_PLANES=1), KL against the base
+Mean ln(PPL(Q)/PPL(base))     :   0.001290 ±   0.000589
+Mean PPL(Q)/PPL(base)         :   1.001291 ±   0.000590
+Mean PPL(Q)-PPL(base)         :   0.008890 ±   0.004082
+Mean    KLD:   0.000753 ±   0.000034
+Maximum KLD:   0.118331
+99.9%   KLD:   0.049041
+99.0%   KLD:   0.007203
+95.0%   KLD:   0.002403
+90.0%   KLD:   0.001448
+Median  KLD:   0.000275
+10.0%   KLD:   0.000004
+ 5.0%   KLD:   0.000001
+ 1.0%   KLD:  -0.000002
+ 0.1%   KLD:  -0.000018
+Minimum KLD:  -0.000044
+Mean    Δp: -0.008 ± 0.008 %
+Maximum Δp: 14.650%
+99.9%   Δp:  4.670%
+99.0%   Δp:  1.816%
+95.0%   Δp:  0.846%
+90.0%   Δp:  0.487%
+ 1.0%   Δp: -1.993%
+RMS Δp    :  0.704 ± 0.036 %
+Same top p: 98.864 ± 0.117 %
+--- control: two planes again, KL against the base (should be ~0; measures the harness floor)
+Maximum KLD:   0.000065
+99.9%   KLD:   0.000050
+99.0%   KLD:   0.000038
+99.9%   Δp:  0.004%
+99.0%   Δp:  0.002%
+Same top p: 100.000 ± 0.000 %
+--- prefill speed at the product configuration, two planes vs one
+P2 health=1 vram_used=11324 MiB
+P2 prefill: 16830 tok at 787 tok/s / 16831 tok at 796 tok/s
+P2 greedy vs stock dump (thinking off): 5 of 5 identical
+P1 health=1 vram_used=11324 MiB
+P1 prefill: 16830 tok at 992 tok/s / 16831 tok at 993 tok/s
+P1 greedy vs stock dump (thinking off): 5 of 5 identical
+=== product start 2026-10-05 09:40 engine f07229cd1: inner health=1 vram=11444 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+=== done 09:40
+=== kl planes 2026-10-05 09:42 engine c6d3ff7be; chunks 8 x 2048 of 495418 chars
+--- base: two planes, reusing C:/Users/pwall/Projects/mirai-s-serve/artifacts/calib/two-plane.kld
+--- candidate: GGML_MIRAI_PREFILL_PLANES=ffn, KL against the base
+Mean ln(PPL(Q)/PPL(base))     :  -0.000118 ±   0.000393
+Mean PPL(Q)/PPL(base)         :   0.999882 ±   0.000393
+Mean PPL(Q)-PPL(base)         :  -0.000815 ±   0.002706
+Mean    KLD:   0.000278 ±   0.000010
+Maximum KLD:   0.040833
+99.9%   KLD:   0.011180
+99.0%   KLD:   0.002176
+95.0%   KLD:   0.000871
+90.0%   KLD:   0.000597
+Median  KLD:   0.000129
+10.0%   KLD:   0.000001
+ 5.0%   KLD:  -0.000000
+ 1.0%   KLD:  -0.000004
+ 0.1%   KLD:  -0.000023
+Minimum KLD:  -0.000030
+Mean    Δp:  0.002 ± 0.005 %
+Maximum Δp:  9.023%
+99.9%   Δp:  3.112%
+99.0%   Δp:  1.242%
+95.0%   Δp:  0.578%
+90.0%   Δp:  0.338%
+ 1.0%   Δp: -1.295%
+RMS Δp    :  0.424 ± 0.017 %
+Same top p: 99.194 ± 0.099 %
+--- control: two planes again, KL against the base (should be ~0; measures the harness floor)
+Maximum KLD:   0.000065
+99.9%   KLD:   0.000050
+99.0%   KLD:   0.000038
+99.9%   Δp:  0.004%
+99.0%   Δp:  0.002%
+Same top p: 100.000 ± 0.000 %
+--- prefill speed at the product configuration, two planes vs one
+P2 health=1 vram_used=11324 MiB
+P2 prefill: 16830 tok at 790 tok/s / 16831 tok at 801 tok/s
+P2 greedy vs stock dump (thinking off): 5 of 5 identical
+Pffn health=1 vram_used=11324 MiB
+Pffn prefill: 16830 tok at 939 tok/s / 16831 tok at 939 tok/s
+Pffn greedy vs stock dump (thinking off): 5 of 5 identical
+=== product start 2026-10-05 09:45 engine c6d3ff7be: inner health=1 vram=11444 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+=== done 09:45

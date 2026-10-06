@@ -1,0 +1,15 @@
+{"family": "computation", "name": "knapsack", "seed": 1, "arm": "mirai-raw-ffn", "ok": false, "detail": "answer 275 truth 270", "tokens": 10397, "runs": 0, "wall_s": 131.7}
+{"family": "computation", "name": "knapsack", "seed": 2, "arm": "mirai-raw-ffn", "ok": true, "detail": "answer 161 truth 161", "tokens": 10214, "runs": 0, "wall_s": 127.4}
+{"family": "computation", "name": "knapsack", "seed": 3, "arm": "mirai-raw-ffn", "ok": false, "detail": "answer 247 truth 237", "tokens": 21512, "runs": 0, "wall_s": 273.1}
+{"family": "computation", "name": "digits", "seed": 1, "arm": "mirai-raw-ffn", "ok": false, "detail": "answer 89771 truth 54305", "tokens": 989, "runs": 0, "wall_s": 13.2}
+{"family": "computation", "name": "digits", "seed": 2, "arm": "mirai-raw-ffn", "ok": false, "detail": "answer 127363 truth 35671", "tokens": 21404, "runs": 0, "wall_s": 270.0}
+{"family": "computation", "name": "digits", "seed": 3, "arm": "mirai-raw-ffn", "ok": false, "detail": "answer 66571 truth 159976", "tokens": 14844, "runs": 0, "wall_s": 194.9}
+{"family": "computation", "name": "lcs", "seed": 1, "arm": "mirai-raw-ffn", "ok": false, "detail": "answer None truth 17012", "tokens": 17690, "runs": 0, "wall_s": 211.1}
+{"family": "computation", "name": "lcs", "seed": 2, "arm": "mirai-raw-ffn", "ok": false, "detail": "answer 13001 truth 16006", "tokens": 21009, "runs": 0, "wall_s": 253.8}
+{"family": "computation", "name": "lcs", "seed": 3, "arm": "mirai-raw-ffn", "ok": false, "detail": "answer None truth 14009", "tokens": 18966, "runs": 0, "wall_s": 226.5}
+{"family": "computation", "name": "sales", "seed": 1, "arm": "mirai-raw-ffn", "ok": true, "detail": "answer 3002244 truth 3002244", "tokens": 16756, "runs": 0, "wall_s": 208.7}
+{"family": "computation", "name": "sales", "seed": 2, "arm": "mirai-raw-ffn", "ok": true, "detail": "answer 10 truth 10", "tokens": 4702, "runs": 0, "wall_s": 62.4}
+{"family": "computation", "name": "sales", "seed": 3, "arm": "mirai-raw-ffn", "ok": false, "detail": "answer 1134746 truth 1245458", "tokens": 3857, "runs": 0, "wall_s": 52.5}
+{"family": "computation", "name": "weblog", "seed": 1, "arm": "mirai-raw-ffn", "ok": true, "detail": "answer 1238271 truth 1238271", "tokens": 13494, "runs": 0, "wall_s": 175.0}
+{"family": "computation", "name": "weblog", "seed": 2, "arm": "mirai-raw-ffn", "ok": false, "detail": "answer None truth 24", "tokens": 10408, "runs": 0, "wall_s": 139.6}
+{"family": "computation", "name": "weblog", "seed": 3, "arm": "mirai-raw-ffn", "ok": true, "detail": "answer 4 truth 4", "tokens": 4934, "runs": 0, "wall_s": 71.4}

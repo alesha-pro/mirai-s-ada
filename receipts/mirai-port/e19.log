@@ -1,0 +1,21 @@
+=== E19 2026-10-06 04:12 engine f0c1cda47 layer 6cd4828
+=== product start 2026-10-06 04:12 engine f0c1cda47: inner health=1 vram=11459 MiB
+layer  on: clients use :8080 (API cards, API check, sandboxed Python); llama-server on 127.0.0.1:18080
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+| family | task | mirai-layer |
+| --- | --- | ---: |
+| coding | suite-tar-01 | 3/4 |
+| coding | xfer-mime-01 | 0/4 |
+| coding | xfer-zip-01 | 4/4 |
+| **total** | | **7/12** |
+
+completion tokens: mirai-layer 224,017
+| coding | xfer-zip-01 | 4 | - | pass | - | pass |  |
+| run / arm | coding | total | tokens |
+| E18-coding-layer mirai-layer | 7/12 | 7/12 | 223,426 |
+| E19-coding-layer mirai-layer | 7/12 | 7/12 | 224,017 |
+E18-coding-layer: rescues 0, losses 0 (mirai-layer vs mirai-raw)
+E19-coding-layer: rescues 0, losses 0 (mirai-layer vs mirai-raw)
+=== product start 2026-10-06 05:10 engine f0c1cda47: inner health=1 vram=11459 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+=== done 05:10; product restored with defaults

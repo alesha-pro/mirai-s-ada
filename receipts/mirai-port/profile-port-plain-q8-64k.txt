@@ -1,0 +1,4 @@
+mean decode 41.1 tok/s
+mean decode 38.9 tok/s
+mean decode 37.2 tok/s
+mean decode 34.4 tok/s

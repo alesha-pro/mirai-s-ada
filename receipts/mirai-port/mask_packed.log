@@ -1,0 +1,39 @@
+=== packed mask 2026-10-05 10:29 engine 4b0caa048
+M16 health=1 vram_used=11324 MiB
+M16 (f16 mask, ub512) buffers: I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB;I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB;  vram 11324 MiB
+short prompt 663 tok at 515 tok/s, decode 70.0
+mid   prompt 2415 tok at 794 tok/s, decode 70.8
+long  prompt 8831 tok at 823 tok/s, decode 66.7
+dumped C:/Users/pwall/Projects/mirai-s-serve/artifacts/long-f16.json
+M16 prefill 16k: 16824 tok at 802 tok/s
+MP512 health=1 vram_used=11088 MiB
+MP512 (packed, ub512) buffers: I sched_reserve:      CUDA0 compute buffer size =   155.30 MiB;I sched_reserve:  CUDA_Host compute buffer size =    36.28 MiB;  vram 11088 MiB
+SAME short prompt 663 tok at 541 tok/s, decode 69.9
+SAME mid   prompt 2415 tok at 801 tok/s, decode 70.7
+SAME long  prompt 8831 tok at 824 tok/s, decode 66.7
+3 of 3 identical
+MP512 prefill 16k: 16824 tok at 805 tok/s
+MP512 vram after: 11210 MiB
+MP2048 health=1 vram_used=11924 MiB
+MP2048 (packed, ub2048) buffers: I sched_reserve:      CUDA0 compute buffer size =   620.39 MiB;I sched_reserve:  CUDA_Host compute buffer size =   144.34 MiB;  vram 11924 MiB
+SAME short prompt 663 tok at 39 tok/s, decode 70.3
+SAME mid   prompt 2415 tok at 46 tok/s, decode 71.3
+SAME long  prompt 8831 tok at 39 tok/s, decode 67.5
+3 of 3 identical
+MP2048 prefill 16k: 16824 tok at 40 tok/s
+MP2048 vram after: 11968 MiB
+=== product start 2026-10-05 10:43 engine 4b0caa048: inner health=1 vram=11444 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+=== done 10:43
+=== MP1024 arm 10:44
+MP1024 health=1 vram_used=11368 MiB
+MP1024 buffers: I sched_reserve:      CUDA0 compute buffer size =   310.33 MiB;I sched_reserve:  CUDA_Host compute buffer size =    72.30 MiB;
+SAME short prompt 663 tok at 588 tok/s, decode 70.7
+SAME mid   prompt 2415 tok at 901 tok/s, decode 70.9
+SAME long  prompt 8831 tok at 942 tok/s, decode 67.3
+3 of 3 identical
+MP1024 prefill 16k: 16830 tok at 917 tok/s
+MP1024 prefill 16k: 16831 tok at 914 tok/s
+MP1024 vram after: 11526 MiB
+=== product start 2026-10-05 10:45 engine 4b0caa048: inner health=1 vram=11444 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)

@@ -1,0 +1,26 @@
+# weights
+models/
+*.gguf
+
+# built / downloaded binaries and build trees (tooling\build_engine.bat builds engine\ into build\, install_bin.ps1 fills bin\)
+bin/
+build/
+tooling/ninja/
+*.exe
+*.dll
+*.lib
+*.exp
+*.obj
+*.pdb
+*.zip
+
+# local state, secrets, raw server logs
+artifacts/
+logs/
+__pycache__/
+*.pyc
+
+# layer: downloaded sandbox runtime and caches (layer\fetch_runtime.ps1 re-creates them)
+layer/runtime/
+layer/apicards-cache.json
+layer/apicards-v2-cache.json

@@ -1,0 +1,28 @@
+I load_tensors:        CUDA0 model buffer size =     0.00 MiB
+I load_tensors:    CUDA_Host model buffer size =     0.00 MiB
+I llama_kv_cache:      CUDA0 KV buffer size =     0.00 MiB
+I llama_memory_recurrent:      CUDA0 RS buffer size =   448.88 MiB
+I sched_reserve:      CUDA0 compute buffer size =   406.33 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   168.30 MiB
+I common_memory_breakdown_print: | memory breakdown [MiB] | total    free     self   model   context   compute    unaccounted |
+I common_memory_breakdown_print: |   - CUDA0 (RTX 4070)   | 12281 = 10656 + (11251 =  8220 +    2624 +     406) +       -9625 |
+I load_tensors:        CUDA0 model buffer size =     0.00 MiB
+I load_tensors:    CUDA_Host model buffer size =     0.00 MiB
+I llama_kv_cache:      CUDA0 KV buffer size =     0.00 MiB
+I sched_reserve:      CUDA0 compute buffer size =   304.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   168.30 MiB
+I common_memory_breakdown_print: | memory breakdown [MiB] | total    free    self   model   context   compute    unaccounted |
+I common_memory_breakdown_print: |   - CUDA0 (RTX 4070)   | 12281 = 11106 + (8660 =  8220 +     136 +     304) +       -7485 |
+I common_params_fit_impl: projected to use 11691 MiB of device memory vs. 10656 MiB of free device memory
+I common_params_fit_impl: cannot meet free memory target of 1024 MiB, need to reduce device memory by 2059 MiB
+I load_tensors:   CPU_Mapped model buffer size =  2425.00 MiB
+I load_tensors:        CUDA0 model buffer size =  8220.23 MiB
+I llama_kv_cache:      CUDA0 KV buffer size =  2176.00 MiB
+I llama_memory_recurrent:      CUDA0 RS buffer size =   448.88 MiB
+I sched_reserve:      CUDA0 compute buffer size =   406.33 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   168.30 MiB
+I llama_kv_cache:      CUDA0 KV buffer size =   136.00 MiB
+I sched_reserve:      CUDA0 compute buffer size =   304.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   168.30 MiB
+I sched_reserve:      CUDA0 compute buffer size =   304.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   168.30 MiB

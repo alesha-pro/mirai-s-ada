@@ -1,0 +1,27 @@
+=== pipeline probe 2026-10-05 18:10 engine 4b0caa048 bin=build\bin
+P0-64 health=1 vram_used=11368 MiB
+P0-64 (GGML_MIRAI_PIPELINE=0 GGML_MIRAI_LEVELS_MIB=64) prefill 16.8k: 1106 / 1103 tok/s; vram after 11542 MiB
+dumped C:/Users/pwall/Projects/mirai-s-serve/artifacts/long-serial.json
+P1-64 health=1 vram_used=11966 MiB
+P1-64 (GGML_MIRAI_PIPELINE=1 GGML_MIRAI_LEVELS_MIB=64) prefill 16.8k: ; vram after 8393 MiB
+identity vs serial path: urllib.error.HTTPError: HTTP Error 503: Service Unavailable
+[0mP1-32 (GGML_MIRAI_PIPELINE=1 GGML_MIRAI_LEVELS_MIB=32) prefill 16.8k: ; vram after 21 MiB
+P1-16 health=1 vram_used=11334 MiB
+P1-16 (GGML_MIRAI_PIPELINE=1 GGML_MIRAI_LEVELS_MIB=16) prefill 16.8k: 952 / 960 tok/s; vram after 11482 MiB
+P1-128 health=1 vram_used=11939 MiB
+P1-128 (GGML_MIRAI_PIPELINE=1 GGML_MIRAI_LEVELS_MIB=128) prefill 16.8k: ; vram after 8380 MiB
+=== done 18:17
+=== pipeline probe 2026-10-05 18:22 engine 4b0caa048 bin=build\bin
+P0-64 health=1 vram_used=11323 MiB
+P0-64 (GGML_MIRAI_PIPELINE=0 GGML_MIRAI_LEVELS_MIB=64) prefill 16.8k: 1038 / 1052 tok/s; vram after 11455 MiB
+dumped C:/Users/pwall/Projects/mirai-s-serve/artifacts/long-serial.json
+P1-64 health=1 vram_used=11323 MiB
+P1-64 (GGML_MIRAI_PIPELINE=1 GGML_MIRAI_LEVELS_MIB=64) prefill 16.8k: 1031 / 1052 tok/s; vram after 11571 MiB
+identity vs serial path: 3 of 3 identical
+P0-128 health=1 vram_used=11323 MiB
+P0-128 (GGML_MIRAI_PIPELINE=0 GGML_MIRAI_LEVELS_MIB=128) prefill 16.8k: 1089 / 1096 tok/s; vram after 11497 MiB
+P1-128 health=1 vram_used=11323 MiB
+P1-128 (GGML_MIRAI_PIPELINE=1 GGML_MIRAI_LEVELS_MIB=128) prefill 16.8k: 1057 / 1073 tok/s; vram after 11719 MiB
+P1-256 health=1 vram_used=11323 MiB
+P1-256 (GGML_MIRAI_PIPELINE=1 GGML_MIRAI_LEVELS_MIB=256) prefill 16.8k: 1086 / 1104 tok/s; vram after 11723 MiB
+=== done 18:27

@@ -1,0 +1,32 @@
+[
+ {
+  "text": "\n---\n```python\nfrom datetime import datetime\n\n\ndef parse_iso8601_date(date_string: str) -> datetime:\n    \"\"\"\n    Parse an ISO 8601 date string and return a datetime object.\n    \n    Supports common ISO 8601 formats:\n    - YYYY-MM-DD\n    - YYYY-MM-DDTHH:MM:SS\n    - YYYY-MM-DDTHH:MM:SSZ\n    - YYYY-MM-DDTHH:MM:SS+HH:MM\n    - YYYY-MM-DDTHH:MM:SS-HH:MM\n    \n    Args:\n        date_string: An ISO 8601 formatted date string.\n        \n    Returns:\n        A datetime object representing the parsed date.\n        \n    Raises:\n        ValueError: If the date string is not a valid ISO 8601 format.\n    \"\"\"\n    # Handle 'Z' suffix (UTC) by replacing with '+0",
+  "tps": 40.11794271964171,
+  "pps": 438.5502306552162,
+  "n": 200
+ },
+ {
+  "text": "\n---\nSunlight appears white but is actually composed of a spectrum of colors, each with a different wavelength. When sunlight enters Earth's atmosphere, it interacts with the nitrogen and oxygen molecules that make up the air. Shorter wavelengths, such as blue and violet, scatter much more strongly than longer wavelengths like red and orange, a phenomenon known as Rayleigh scattering. Although violet light scatters even more than blue, our eyes are less sensitive to violet, and some of it is absorbed by the ozone layer, making blue the dominant color we perceive. Consequently, the scattered blue light is distributed across the sky, giving it its characteristic blue appearance during the day.",
+  "tps": 39.83070113676821,
+  "pps": 496.2984407957318,
+  "n": 131
+ },
+ {
+  "text": "\n---\n2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71",
+  "tps": 40.116163398554626,
+  "pps": 493.9375836439912,
+  "n": 75
+ },
+ {
+  "text": "\n---\nLe renard brun rapide saute par-dessus le chien paresseux près de la rive du fleuve à l'aube.\n\nWord count: 15",
+  "tps": 39.7444996451384,
+  "pps": 520.45582990354,
+  "n": 36
+ },
+ {
+  "text": "\n---\nTo determine how long the train was moving, we need to calculate the total elapsed time and then subtract the time spent stopped.\n\n### Step 1: Calculate the total elapsed time\n\nThe train leaves at **09:40** and arrives at **14:05**.\n\n1.  **Calculate the difference in hours:**\n    $$14 \\text{ hours} - 9 \\text{ hours} = 5 \\text{ hours}$$\n\n2.  **Calculate the difference in minutes:**\n    $$05 \\text{ minutes} - 40 \\text{ minutes}$$\n    Since 5 is less than 40, we borrow 1 hour (60 minutes) from the 5 hours.\n    $$65 \\text{ minutes} - 40 \\text{ minutes} = 25 \\text{ minutes}$$\n    *(Note: The 5 hours becomes 4 hours after borrowing)*",
+  "tps": 39.92431633620769,
+  "pps": 544.9818392816499,
+  "n": 200
+ }
+]

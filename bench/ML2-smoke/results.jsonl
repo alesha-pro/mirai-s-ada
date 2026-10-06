@@ -1,0 +1,6 @@
+{"family": "coding", "name": "suite-tar-01", "seed": 1, "arm": "mirai-raw", "ok": false, "detail": ["hidden1:invalid_tar", "hidden2:invalid_tar"], "tokens": 39119, "responses": 12, "terminal": "response_cap", "wall_s": 570.4}
+{"family": "coding", "name": "suite-tar-01", "seed": 1, "arm": "mirai-layer", "ok": true, "detail": [], "tokens": 26853, "responses": 12, "terminal": "response_cap", "wall_s": 403.4}
+{"family": "computation", "name": "knapsack", "seed": 1, "arm": "mirai-layer", "ok": true, "detail": "answer 270 truth 270", "tokens": 634, "runs": 2, "wall_s": 10.5}
+{"family": "computation", "name": "knapsack", "seed": 1, "arm": "mirai-raw", "ok": false, "detail": "answer 275 truth 270", "tokens": 10397, "runs": 0, "wall_s": 132.7}
+{"family": "workspace", "name": "invoiceH", "seed": 1, "arm": "mirai-raw", "ok": false, "detail": "submitted; full_pass=False", "tokens": 2289, "responses": 6, "wall_s": 41.9}
+{"family": "workspace", "name": "invoiceH", "seed": 1, "arm": "mirai-layer", "ok": false, "detail": "submitted; full_pass=False", "tokens": 2289, "responses": 6, "wall_s": 41.6}

@@ -1,0 +1,368 @@
+=== vram split 2026-10-05 01:27 engine 4bdc6587b; idle 55 MiB
+G1 pid=18008 port=18081 ctx=262144 extra=[-b 2048 -ub 512 --kv-vram-cells 31488 --spec-type draft-mtp --spec-draft-n-max 2 -ctkd q8_0 -ctvd q8_0 --spec-draft-window 16384 --spec-draft-n-max-tail 4 --backend-sampling --no-warmup -lv 5] log=C:\Users\pwall\Projects\mirai-s-serve\logs\G1.log
+G1 health=1 vram_used=11308 MiB
+G1 after load (no warmup): 11308 MiB
+G1 after 1 token (prompt 136 tok at 321 tok/s, decode 0.0): 11332 MiB
+G1 after 2.4k prompt (prompt 2392 tok at 791 tok/s, decode 71.4): 11414 MiB
+G1 after 32 more tokens (prompt 136 tok at 366 tok/s, decode 60.4): 11430 MiB
+G1 buffer lines:
+I load_tensors:        CUDA0 model buffer size =     0.00 MiB
+I load_tensors:    CUDA_Host model buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0BC2E40_l11_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0BC2E40_l15_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0BC2E40_l19_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0BC2E40_l23_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0BC2E40_l27_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0BC2E40_l31_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0BC2E40_l35_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0BC2E40_l39_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0BC2E40_l3_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0BC2E40_l43_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0BC2E40_l47_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0BC2E40_l51_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0BC2E40_l55_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0BC2E40_l59_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0BC2E40_l63_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0BC2E40_l7_120117_2 KV buffer size =     0.00 MiB
+I llama_memory_recurrent:      CUDA0 RS buffer size =   748.12 MiB
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I load_tensors:        CUDA0 model buffer size =     0.00 MiB
+I load_tensors:    CUDA_Host model buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0C4EE40_l64_120117_2 KV buffer size =     0.00 MiB
+I sched_reserve:      CUDA0 compute buffer size =   324.28 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I load_tensors:   CPU_Mapped model buffer size =  2425.00 MiB
+I load_tensors:        CUDA0 model buffer size =  8220.23 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0AB1020_l11_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0AB1020_l15_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0AB1020_l19_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0AB1020_l23_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0AB1020_l27_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0AB1020_l31_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0AB1020_l35_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0AB1020_l39_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0AB1020_l3_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0AB1020_l43_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0AB1020_l47_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0AB1020_l51_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0AB1020_l55_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0AB1020_l59_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0AB1020_l63_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000185A0AB1020_l7_120117_2 KV buffer size =   544.00 MiB
+I llama_memory_recurrent:      CUDA0 RS buffer size =   748.12 MiB
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I common_speculative_init_result: draft context sized to 20736 tokens (spec-draft-window 16384, target 262144)
+I llama_kv_cache:      CUDA0 KV buffer size =    43.03 MiB
+I sched_reserve:      CUDA0 compute buffer size =   118.53 MiB
+I sched_reserve:  CUDA_Host compute buffer size =    40.53 MiB
+I cuda pool[0] 00000185A3654BA0: size 2 MiB (+2 MiB for a 0 MiB request)
+I sched_reserve:      CUDA0 compute buffer size =   118.53 MiB
+I sched_reserve:  CUDA_Host compute buffer size =    40.53 MiB
+I cuda pool[0] 00000185A3654C20: size 2 MiB (+2 MiB for a 0 MiB request)
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I cuda pool[0] 00000185A3654BA0: size 6 MiB (+4 MiB for a 5 MiB request)
+I cuda pool[0] 00000185A3654C20: size 6 MiB (+4 MiB for a 2 MiB request)
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I cuda pool[0] 00000185A3654BA0: size 38 MiB (+32 MiB for a 31 MiB request)
+I cuda pool[0] 00000185A3654BA0: size 62 MiB (+24 MiB for a 25 MiB request)
+I cuda pool[0] 00000185A3654C20: size 10 MiB (+4 MiB for a 2 MiB request)
+I cuda pool[0] 00000185A3654C20: size 14 MiB (+4 MiB for a 2 MiB request)
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+G0 pid=2756 port=18081 ctx=262144 extra=[-b 2048 -ub 512 --kv-vram-cells 31488 --spec-type draft-mtp --spec-draft-n-max 2 -ctkd q8_0 -ctvd q8_0 --spec-draft-window 16384 --spec-draft-n-max-tail 4 --backend-sampling --no-warmup -lv 5] log=C:\Users\pwall\Projects\mirai-s-serve\logs\G0.log
+G0 health=1 vram_used=11308 MiB
+G0 after load (no warmup): 11308 MiB
+G0 after 1 token (prompt 136 tok at 191 tok/s, decode 0.0): 11332 MiB
+G0 after 2.4k prompt (prompt 2392 tok at 788 tok/s, decode 67.6): 11398 MiB
+G0 after 32 more tokens (prompt 136 tok at 351 tok/s, decode 59.9): 11398 MiB
+G0 buffer lines:
+I load_tensors:        CUDA0 model buffer size =     0.00 MiB
+I load_tensors:    CUDA_Host model buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715290_l11_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715290_l15_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715290_l19_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715290_l23_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715290_l27_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715290_l31_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715290_l35_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715290_l39_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715290_l3_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715290_l43_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715290_l47_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715290_l51_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715290_l55_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715290_l59_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715290_l63_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715290_l7_120117_2 KV buffer size =     0.00 MiB
+I llama_memory_recurrent:      CUDA0 RS buffer size =   748.12 MiB
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I load_tensors:        CUDA0 model buffer size =     0.00 MiB
+I load_tensors:    CUDA_Host model buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715610_l64_120117_2 KV buffer size =     0.00 MiB
+I sched_reserve:      CUDA0 compute buffer size =   324.28 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I load_tensors:   CPU_Mapped model buffer size =  2425.00 MiB
+I load_tensors:        CUDA0 model buffer size =  8220.23 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715ED0_l11_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715ED0_l15_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715ED0_l19_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715ED0_l23_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715ED0_l27_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715ED0_l31_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715ED0_l35_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715ED0_l39_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715ED0_l3_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715ED0_l43_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715ED0_l47_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715ED0_l51_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715ED0_l55_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715ED0_l59_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715ED0_l63_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv00000208A1715ED0_l7_120117_2 KV buffer size =   544.00 MiB
+I llama_memory_recurrent:      CUDA0 RS buffer size =   748.12 MiB
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I common_speculative_init_result: draft context sized to 20736 tokens (spec-draft-window 16384, target 262144)
+I llama_kv_cache:      CUDA0 KV buffer size =    43.03 MiB
+I sched_reserve:      CUDA0 compute buffer size =   118.53 MiB
+I sched_reserve:  CUDA_Host compute buffer size =    40.53 MiB
+I cuda pool[0] 00000208B66154B0: size 2 MiB (+2 MiB for a 0 MiB request)
+I sched_reserve:      CUDA0 compute buffer size =   118.53 MiB
+I sched_reserve:  CUDA_Host compute buffer size =    40.53 MiB
+I cuda pool[0] 00000208B6615BF0: size 2 MiB (+2 MiB for a 0 MiB request)
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I cuda pool[0] 00000208B66154B0: size 6 MiB (+4 MiB for a 5 MiB request)
+I cuda pool[0] 00000208B6615BF0: size 6 MiB (+4 MiB for a 2 MiB request)
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I cuda pool[0] 00000208B66154B0: size 38 MiB (+32 MiB for a 31 MiB request)
+I cuda pool[0] 00000208B66154B0: size 62 MiB (+24 MiB for a 25 MiB request)
+I cuda pool[0] 00000208B6615BF0: size 10 MiB (+4 MiB for a 2 MiB request)
+I cuda pool[0] 00000208B6615BF0: size 14 MiB (+4 MiB for a 2 MiB request)
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+G2 pid=24520 port=18081 ctx=262144 extra=[-b 2048 -ub 512 --kv-vram-cells 31488 --spec-type draft-mtp --spec-draft-n-max 2 -ctkd q8_0 -ctvd q8_0 --spec-draft-window 16384 --spec-draft-n-max-tail 4 --backend-sampling --no-warmup -lv 5] log=C:\Users\pwall\Projects\mirai-s-serve\logs\G2.log
+G2 health=1 vram_used=11306 MiB
+G2 after load (no warmup): 11306 MiB
+G2 after 1 token (prompt 136 tok at 210 tok/s, decode 0.0): 11326 MiB
+G2 after 2.4k prompt (prompt 2392 tok at 788 tok/s, decode 71.3): 11400 MiB
+G2 after 32 more tokens (prompt 136 tok at 355 tok/s, decode 60.2): 11416 MiB
+G2 buffer lines:
+I load_tensors:        CUDA0 model buffer size =     0.00 MiB
+I load_tensors:    CUDA_Host model buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3BDEDC50_l11_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3BDEDC50_l15_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3BDEDC50_l19_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3BDEDC50_l23_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3BDEDC50_l27_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3BDEDC50_l31_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3BDEDC50_l35_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3BDEDC50_l39_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3BDEDC50_l3_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3BDEDC50_l43_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3BDEDC50_l47_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3BDEDC50_l51_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3BDEDC50_l55_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3BDEDC50_l59_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3BDEDC50_l63_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3BDEDC50_l7_120117_2 KV buffer size =     0.00 MiB
+I llama_memory_recurrent:      CUDA0 RS buffer size =   748.12 MiB
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I load_tensors:        CUDA0 model buffer size =     0.00 MiB
+I load_tensors:    CUDA_Host model buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3C065070_l64_120117_2 KV buffer size =     0.00 MiB
+I sched_reserve:      CUDA0 compute buffer size =   324.28 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I load_tensors:   CPU_Mapped model buffer size =  2425.00 MiB
+I load_tensors:        CUDA0 model buffer size =  8220.23 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3C0653F0_l11_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3C0653F0_l15_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3C0653F0_l19_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3C0653F0_l23_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3C0653F0_l27_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3C0653F0_l31_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3C0653F0_l35_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3C0653F0_l39_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3C0653F0_l3_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3C0653F0_l43_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3C0653F0_l47_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3C0653F0_l51_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3C0653F0_l55_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3C0653F0_l59_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3C0653F0_l63_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv0000015B3C0653F0_l7_120117_2 KV buffer size =   544.00 MiB
+I llama_memory_recurrent:      CUDA0 RS buffer size =   748.12 MiB
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I common_speculative_init_result: draft context sized to 20736 tokens (spec-draft-window 16384, target 262144)
+I llama_kv_cache:      CUDA0 KV buffer size =    43.03 MiB
+I sched_reserve:      CUDA0 compute buffer size =   118.53 MiB
+I sched_reserve:  CUDA_Host compute buffer size =    40.53 MiB
+I cuda pool[0] 0000015B3EF840F0: size 2 MiB (+2 MiB for a 0 MiB request)
+I sched_reserve:      CUDA0 compute buffer size =   118.53 MiB
+I sched_reserve:  CUDA_Host compute buffer size =    40.53 MiB
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I cuda pool[0] 0000015B3EF840F0: size 6 MiB (+4 MiB for a 5 MiB request)
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I cuda pool[0] 0000015B3EF840F0: size 38 MiB (+32 MiB for a 31 MiB request)
+I cuda pool[0] 0000015B3EF840F0: size 62 MiB (+24 MiB for a 25 MiB request)
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+G3 pid=1080 port=18081 ctx=262144 extra=[-b 2048 -ub 512 --kv-vram-cells 31488 --spec-type draft-mtp --spec-draft-n-max 2 -ctkd q8_0 -ctvd q8_0 --spec-draft-window 16384 --spec-draft-n-max-tail 4 --backend-sampling --no-warmup -lv 5] log=C:\Users\pwall\Projects\mirai-s-serve\logs\G3.log
+G3 health=1 vram_used=11248 MiB
+G3 after load (no warmup): 11248 MiB
+G3 after 1 token (prompt 136 tok at 201 tok/s, decode 0.0): 11272 MiB
+G3 after 2.4k prompt (prompt 2392 tok at 791 tok/s, decode 71.1): 11348 MiB
+G3 after 32 more tokens (prompt 136 tok at 358 tok/s, decode 60.4): 11364 MiB
+G3 buffer lines:
+I load_tensors:        CUDA0 model buffer size =     0.00 MiB
+I load_tensors:    CUDA_Host model buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4600_l11_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4600_l15_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4600_l19_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4600_l23_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4600_l27_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4600_l31_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4600_l35_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4600_l39_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4600_l3_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4600_l43_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4600_l47_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4600_l51_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4600_l55_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4600_l59_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4600_l63_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4600_l7_120117_2 KV buffer size =     0.00 MiB
+I llama_memory_recurrent:      CUDA0 RS buffer size =   748.12 MiB
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I load_tensors:        CUDA0 model buffer size =     0.00 MiB
+I load_tensors:    CUDA_Host model buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4980_l64_120117_2 KV buffer size =     0.00 MiB
+I sched_reserve:      CUDA0 compute buffer size =   324.28 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I load_tensors:   CPU_Mapped model buffer size =  2425.00 MiB
+I load_tensors:        CUDA0 model buffer size =  8220.23 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4280_l11_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4280_l15_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4280_l19_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4280_l23_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4280_l27_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4280_l31_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4280_l35_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4280_l39_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4280_l3_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4280_l43_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4280_l47_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4280_l51_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4280_l55_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4280_l59_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4280_l63_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001A0B57C4280_l7_120117_2 KV buffer size =   544.00 MiB
+I llama_memory_recurrent:      CUDA0 RS buffer size =   748.12 MiB
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I common_speculative_init_result: draft context sized to 20736 tokens (spec-draft-window 16384, target 262144)
+I llama_kv_cache:      CUDA0 KV buffer size =    43.03 MiB
+I sched_reserve:      CUDA0 compute buffer size =    59.40 MiB
+I sched_reserve:  CUDA_Host compute buffer size =    20.40 MiB
+I cuda pool[0] 000001A0C04852A0: size 2 MiB (+2 MiB for a 0 MiB request)
+I sched_reserve:      CUDA0 compute buffer size =    59.40 MiB
+I sched_reserve:  CUDA_Host compute buffer size =    20.40 MiB
+I cuda pool[0] 000001A0C0485AE0: size 2 MiB (+2 MiB for a 0 MiB request)
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I cuda pool[0] 000001A0C04852A0: size 6 MiB (+4 MiB for a 5 MiB request)
+I cuda pool[0] 000001A0C0485AE0: size 6 MiB (+4 MiB for a 2 MiB request)
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I cuda pool[0] 000001A0C04852A0: size 38 MiB (+32 MiB for a 31 MiB request)
+I cuda pool[0] 000001A0C04852A0: size 62 MiB (+24 MiB for a 25 MiB request)
+I cuda pool[0] 000001A0C0485AE0: size 8 MiB (+2 MiB for a 2 MiB request)
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+G4 pid=15984 port=18081 ctx=262144 extra=[-b 2048 -ub 512 --kv-vram-cells 31488 --spec-type draft-mtp --spec-draft-n-max 2 -ctkd q8_0 -ctvd q8_0 --spec-draft-window 16384 --spec-draft-n-max-tail 4 --backend-sampling --no-warmup -lv 5] log=C:\Users\pwall\Projects\mirai-s-serve\logs\G4.log
+G4 health=1 vram_used=11246 MiB
+G4 after load (no warmup): 11246 MiB
+G4 after 1 token (prompt 136 tok at 221 tok/s, decode 0.0): 11266 MiB
+G4 after 2.4k prompt (prompt 2392 tok at 792 tok/s, decode 71.4): 11340 MiB
+G4 after 32 more tokens (prompt 136 tok at 354 tok/s, decode 60.4): 11356 MiB
+G4 buffer lines:
+I load_tensors:        CUDA0 model buffer size =     0.00 MiB
+I load_tensors:    CUDA_Host model buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E522B8EDF0_l11_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E522B8EDF0_l15_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E522B8EDF0_l19_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E522B8EDF0_l23_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E522B8EDF0_l27_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E522B8EDF0_l31_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E522B8EDF0_l35_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E522B8EDF0_l39_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E522B8EDF0_l3_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E522B8EDF0_l43_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E522B8EDF0_l47_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E522B8EDF0_l51_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E522B8EDF0_l55_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E522B8EDF0_l59_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E522B8EDF0_l63_120117_2 KV buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E522B8EDF0_l7_120117_2 KV buffer size =     0.00 MiB
+I llama_memory_recurrent:      CUDA0 RS buffer size =   748.12 MiB
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I load_tensors:        CUDA0 model buffer size =     0.00 MiB
+I load_tensors:    CUDA_Host model buffer size =     0.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E52270B460_l64_120117_2 KV buffer size =     0.00 MiB
+I sched_reserve:      CUDA0 compute buffer size =   324.28 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I load_tensors:   CPU_Mapped model buffer size =  2425.00 MiB
+I load_tensors:        CUDA0 model buffer size =  8220.23 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E527D53C90_l11_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E527D53C90_l15_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E527D53C90_l19_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E527D53C90_l23_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E527D53C90_l27_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E527D53C90_l31_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E527D53C90_l35_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E527D53C90_l39_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E527D53C90_l3_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E527D53C90_l43_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E527D53C90_l47_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E527D53C90_l51_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E527D53C90_l55_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E527D53C90_l59_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E527D53C90_l63_120117_2 KV buffer size =   544.00 MiB
+I llama_kv_cache: CUDA0_tier_kv000001E527D53C90_l7_120117_2 KV buffer size =   544.00 MiB
+I llama_memory_recurrent:      CUDA0 RS buffer size =   748.12 MiB
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I common_speculative_init_result: draft context sized to 20736 tokens (spec-draft-window 16384, target 262144)
+I llama_kv_cache:      CUDA0 KV buffer size =    43.03 MiB
+I sched_reserve:      CUDA0 compute buffer size =    59.40 MiB
+I sched_reserve:  CUDA_Host compute buffer size =    20.40 MiB
+I cuda pool[0] 000001E5250DFB60: size 2 MiB (+2 MiB for a 0 MiB request)
+I sched_reserve:      CUDA0 compute buffer size =    59.40 MiB
+I sched_reserve:  CUDA_Host compute buffer size =    20.40 MiB
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I cuda pool[0] 000001E5250DFB60: size 6 MiB (+4 MiB for a 5 MiB request)
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+I cuda pool[0] 000001E5250DFB60: size 38 MiB (+32 MiB for a 31 MiB request)
+I cuda pool[0] 000001E5250DFB60: size 62 MiB (+24 MiB for a 25 MiB request)
+I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB
+I sched_reserve:  CUDA_Host compute buffer size =   276.28 MiB
+G4 greedy-identical (thinking off): 5 of 5 identical
+G4 depth 0: mean decode 76.8 tok/s
+G4 depth 16000: mean decode 72.0 tok/s
+G4 depth 32000: mean decode 76.4 tok/s
+stopped 1
+=== done 01:31

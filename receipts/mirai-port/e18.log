@@ -1,0 +1,12 @@
+=== E18 2026-10-05 23:28 engine f0c1cda47 layer 8333ec4
+=== product start 2026-10-05 23:28 engine f0c1cda47: inner health=1 vram=11459 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+| family | task | mirai-layer |
+| --- | --- | ---: |
+| coding | suite-tar-01 | 3/4 |
+| coding | xfer-mime-01 | 0/4 |
+| coding | xfer-zip-01 | 4/4 |
+| **total** | | **7/12** |
+
+completion tokens: mirai-layer 223,426
+=== done 00:25

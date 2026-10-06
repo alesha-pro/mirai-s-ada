@@ -1,0 +1,35 @@
+=== ffn gate 2026-10-05 09:47 engine c6d3ff7be
+=== product start 2026-10-05 09:47 engine c6d3ff7be: inner health=1 vram=11444 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+{"family": "computation", "name": "weblog", "seed": 3, "arm": "mirai-raw-ffn", "ok": true, "tokens": 4934, "wall_s": 71.4, "detail": "answer 4 truth 4"}
+
+| family | task | mirai-raw-ffn |
+| --- | --- | ---: |
+| computation | digits | 0/3 |
+| computation | knapsack | 1/3 |
+| computation | lcs | 0/3 |
+| computation | sales | 2/3 |
+| computation | weblog | 2/3 |
+| **total** | | **5/15** |
+
+completion tokens: mirai-raw-ffn 191,176
+item            ML2 raw (two planes)   ffn one-plane
+digits     1    fail                   fail
+digits     2    fail                   fail
+digits     3    fail                   fail
+knapsack   1    fail                   fail
+knapsack   2    pass                   pass
+knapsack   3    fail                   fail
+lcs        1    fail                   fail
+lcs        2    fail                   fail
+lcs        3    fail                   fail
+sales      1    pass                   pass
+sales      2    pass                   pass
+sales      3    fail                   fail
+weblog     1    pass                   pass
+weblog     2    fail                   fail
+weblog     3    pass                   pass
+ML2 raw 5/15 -> ffn 5/15; lost 0, gained 0
+=== product start 2026-10-05 10:28 engine 4b0caa048: inner health=1 vram=11444 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+=== done 10:28; product restored with defaults

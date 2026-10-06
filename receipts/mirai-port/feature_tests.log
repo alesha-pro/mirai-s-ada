@@ -1,0 +1,36 @@
+=== A) MTP draft, 64k q8 20:04
+A health=True
+11754 MiB
+A greedy-identical prompts (of 5): 5
+A depth 0: mean decode 73.9 tok/s
+A depth 16000: mean decode 64.4 tok/s
+A depth 32000: === A) MTP draft, 64k q8 all-VRAM, -b 2048 -ub 512  2026-10-04 21:08 engine 7ecc19e25
+A pid=18732 port=18081 ctx=65536 extra=[-b 2048 -ub 512 --spec-type draft-mtp --spec-draft-n-max 2 -ctkd q8_0 -ctvd q8_0 --spec-draft-window 16384 --spec-draft-n-max-tail 4 --backend-sampling] log=C:\Users\pwall\Projects\mirai-s-serve\logs\A.log
+A health=1 vram_used=11734 MiB
+A greedy-identical (thinking off): 5 of 5 identical
+A depth 0: mean decode 76.9 tok/s
+A depth 16000: mean decode 72.4 tok/s
+A depth 32000: mean decode 68.5 tok/s
+A depth 60000: mean decode 65.4 tok/s
+A vram_after=11924 MiB
+=== B) tiered KV 262k, 32768 cells in VRAM, no MTP, -b 2048 -ub 512  2026-10-04 21:11
+B pid=17036 port=18081 ctx=262144 extra=[-b 2048 -ub 512 --kv-vram-cells 32768] log=C:\Users\pwall\Projects\mirai-s-serve\logs\B.log
+B health=1 vram_used=10100 MiB
+B greedy-identical (thinking off): 5 of 5 identical
+B depth 0: mean decode 41.0 tok/s
+B depth 32000: mean decode 37.2 tok/s
+B depth 60000: mean decode 14.6 tok/s
+B depth 120000: mean decode 6.2 tok/s
+B vram_after=10190 MiB
+=== C) tiered KV 262k, 32768 cells, MTP, -b 2048 -ub 512  2026-10-04 21:22
+C pid=13092 port=18081 ctx=262144 extra=[-b 2048 -ub 512 --spec-type draft-mtp --spec-draft-n-max 2 -ctkd q8_0 -ctvd q8_0 --spec-draft-window 16384 --spec-draft-n-max-tail 4 --backend-sampling --kv-vram-cells 32768] log=C:\Users\pwall\Projects\mirai-s-serve\logs\C.log
+C health=1 vram_used=11314 MiB
+C greedy-identical (thinking off): 5 of 5 identical
+C depth 0: mean decode 77.0 tok/s
+C depth 32000: mean decode 67.9 tok/s
+C depth 60000: mean decode 38.7 tok/s
+C depth 120000: mean decode 19.5 tok/s
+C depth 180000: mean decode 12.6 tok/s
+C vram_after=11520 MiB
+stopped 1
+=== done 21:36

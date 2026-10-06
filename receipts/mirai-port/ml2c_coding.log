@@ -1,0 +1,36 @@
+=== ML2c-coding 2026-10-05 16:09 engine 4b0caa048
+=== product start 2026-10-05 16:09 engine 4b0caa048: inner health=1 vram=11428 MiB
+prefill ubatch 1024  mask=packed 1-bit  planes=2
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+{"family": "coding", "name": "xfer-mime-01", "seed": 4, "arm": "mirai-raw", "ok": true, "tokens": 24785, "wall_s": 375.7, "detail": []}
+
+| family | task | mirai-raw | mirai-layer | rescues / losses (B vs A) |
+| --- | --- | ---: | ---: | --- |
+| coding | suite-tar-01 | 0/4 | 1/4 | 1 / 0 |
+| coding | xfer-mime-01 | 1/4 | 0/4 | 0 / 1 |
+| coding | xfer-zip-01 | 2/4 | 3/4 | 1 / 0 |
+| **total** | | **3/12** | **4/12** | **2 / 1** |
+
+completion tokens: mirai-raw 267,632, mirai-layer 211,462
+| family | item | seed | ML2b mirai-raw | ML2b mirai-layer | ML2c-coding mirai-raw | ML2c-coding mirai-layer | moved |
+| coding | suite-tar-01 | 1 | fail | fail | fail | fail |  |
+| coding | suite-tar-01 | 2 | pass | fail | fail | fail | mirai-raw: pass->fail |
+| coding | suite-tar-01 | 3 | fail | fail | fail | fail |  |
+| coding | suite-tar-01 | 4 | fail | fail | fail | pass | mirai-layer: fail->pass |
+| coding | xfer-mime-01 | 1 | fail | fail | fail | fail |  |
+| coding | xfer-mime-01 | 2 | fail | fail | fail | fail |  |
+| coding | xfer-mime-01 | 3 | fail | fail | fail | fail |  |
+| coding | xfer-mime-01 | 4 | fail | fail | pass | fail | mirai-raw: fail->pass |
+| coding | xfer-zip-01 | 1 | pass | fail | pass | pass | mirai-layer: fail->pass |
+| coding | xfer-zip-01 | 2 | pass | pass | fail | pass | mirai-raw: pass->fail |
+| coding | xfer-zip-01 | 3 | pass | pass | pass | pass |  |
+| coding | xfer-zip-01 | 4 | fail | pass | fail | fail | mirai-layer: pass->fail |
+| run / arm | coding | computation | workspace | total | tokens |
+| ML2c-coding mirai-raw | 3/12 | 0/15 | 0/10 | 3/12 | 267,632 |
+| ML2c-coding mirai-layer | 4/12 | 0/15 | 0/10 | 4/12 | 211,462 |
+ML2b: rescues 12, losses 2 (mirai-layer vs mirai-raw)
+ML2c-coding: rescues 2, losses 1 (mirai-layer vs mirai-raw)
+=== product start 2026-10-05 18:10 engine 4b0caa048: inner health=1 vram=11428 MiB
+prefill ubatch 1024  mask=packed 1-bit  planes=ffn  level chunk 64 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+=== done 18:10; product restored with defaults

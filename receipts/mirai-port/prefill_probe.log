@@ -1,0 +1,22 @@
+=== prefill probe 2026-10-04 20:49 engine 7ecc19e25
+P0 pid=7604 port=18081 ctx=65536 extra=[] log=C:\Users\pwall\Projects\mirai-s-serve\logs\P0.log
+P0 health=1 vram_used=10724 MiB
+P0 no MTP (b1024 ub1024): prompt 2395 tok at 933 tok/s, decode 40.5 tok/s (32 tok), draft_n=None accepted=None
+P1 pid=15512 port=18081 ctx=65536 extra=[--spec-type draft-mtp --spec-draft-n-max 2 -ctkd q8_0 -ctvd q8_0] log=C:\Users\pwall\Projects\mirai-s-serve\logs\P1.log
+P1 health=1 vram_used=11916 MiB
+P1 MTP, no window/tail flags: prompt 2395 tok at 51 tok/s, decode 67.1 tok/s (32 tok), draft_n=26 accepted=19
+P2 pid=16860 port=18081 ctx=65536 extra=[--spec-type draft-mtp --spec-draft-n-max 2 -ctkd q8_0 -ctvd q8_0 --spec-draft-window 16384 --spec-draft-n-max-tail 4] log=C:\Users\pwall\Projects\mirai-s-serve\logs\P2.log
+P2 health=1 vram_used=11926 MiB
+P2 MTP + window 16384 + tail 4: prompt 2395 tok at 51 tok/s, decode 64.7 tok/s (32 tok), draft_n=26 accepted=19
+P3 pid=22640 port=18081 ctx=65536 extra=[--spec-type draft-mtp --spec-draft-n-max 2 -ctkd q8_0 -ctvd q8_0 --spec-draft-window 16384 --spec-draft-n-max-tail 4 --backend-sampling] log=C:\Users\pwall\Projects\mirai-s-serve\logs\P3.log
+P3 health=1 vram_used=11926 MiB
+P3 + backend-sampling (the A config): prompt 2395 tok at 51 tok/s, decode 65.9 tok/s (32 tok), draft_n=26 accepted=19
+P4 pid=4040 port=18081 ctx=65536 extra=[--spec-type draft-mtp --spec-draft-n-max 2 -ctkd q8_0 -ctvd q8_0 --spec-draft-window 16384 --spec-draft-n-max-tail 4 --backend-sampling -b 2048 -ub 512] log=C:\Users\pwall\Projects\mirai-s-serve\logs\P4.log
+P4 health=1 vram_used=11734 MiB
+P4 A config with b2048 ub512 (product batch): prompt 2395 tok at 746 tok/s, decode 66.0 tok/s (32 tok), draft_n=26 accepted=19
+P5 pid=11168 port=18081 ctx=65536 extra=[--spec-type draft-mtp --spec-draft-n-max 2 -ctkd q8_0 -ctvd q8_0] log=C:\Users\pwall\Projects\mirai-s-serve\logs\P5.log
+P5 health=1 vram_used=11900 MiB
+P5 MTP bare, op timing on (graphs off): prompt 2395 tok at 50 tok/s, decode 42.7 tok/s (32 tok), draft_n=26 accepted=19
+P5 again: prompt 2395 tok at 50 tok/s, decode 44.1 tok/s (32 tok), draft_n=26 accepted=19
+stopped 1
+=== probe done 20:54; op timing table: logs/P5.log

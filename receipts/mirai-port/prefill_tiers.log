@@ -1,0 +1,18 @@
+=== prefill tiers 2026-10-05 08:12 engine 4bdc6587b
+U512 health=1 vram_used=11324 MiB
+U512 prefill: 16830 tok at 797 tok/s / 16831 tok at 804 tok/s
+U512 compute: I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB;I sched_reserve:      CUDA0 compute buffer size =   324.28 MiB;I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB;I sched_reserve:      CUDA0 compute buffer size =   118.53 MiB;I sched_reserve:      CUDA0 compute buffer size =   118.53 MiB;I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB;I sched_reserve:      CUDA0 compute buffer size =   395.30 MiB;  vram_after=11414 MiB
+U1024 health=1 vram_used=11838 MiB
+U1024 prefill: 16830 tok at 905 tok/s / 16831 tok at 912 tok/s
+U1024 compute: I sched_reserve:      CUDA0 compute buffer size =   790.33 MiB;I sched_reserve:      CUDA0 compute buffer size =   648.30 MiB;I sched_reserve:      CUDA0 compute buffer size =   790.33 MiB;I sched_reserve:      CUDA0 compute buffer size =   236.80 MiB;I sched_reserve:      CUDA0 compute buffer size =   236.80 MiB;I sched_reserve:      CUDA0 compute buffer size =   790.33 MiB;I sched_reserve:      CUDA0 compute buffer size =   790.33 MiB;  vram_after=11964 MiB
+U2048 health=1 vram_used=11900 MiB
+U2048 prefill: 16830 tok at 48 tok/s / 16831 tok at 48 tok/s
+U2048 compute: I sched_reserve:      CUDA0 compute buffer size =  1580.39 MiB;I sched_reserve:      CUDA0 compute buffer size =  1296.33 MiB;I sched_reserve:      CUDA0 compute buffer size =  1580.39 MiB;I sched_reserve:      CUDA0 compute buffer size =   473.33 MiB;I sched_reserve:      CUDA0 compute buffer size =   473.33 MiB;I sched_reserve:      CUDA0 compute buffer size =  1580.39 MiB;I sched_reserve:      CUDA0 compute buffer size =  1580.39 MiB;  vram_after=11940 MiB
+U1024L health=1 vram_used=11838 MiB
+U1024L prefill: 16830 tok at 115 tok/s / 16831 tok at 115 tok/s
+U1024L compute: I sched_reserve:      CUDA0 compute buffer size =   790.33 MiB;I sched_reserve:      CUDA0 compute buffer size =   648.30 MiB;I sched_reserve:      CUDA0 compute buffer size =   790.33 MiB;I sched_reserve:      CUDA0 compute buffer size =   236.80 MiB;I sched_reserve:      CUDA0 compute buffer size =   236.80 MiB;I sched_reserve:      CUDA0 compute buffer size =   790.33 MiB;I sched_reserve:      CUDA0 compute buffer size =   790.33 MiB;  vram_after=11968 MiB
+U2048L health=1 vram_used=11884 MiB
+U2048L prefill: 16830 tok at 49 tok/s / 16831 tok at 49 tok/s
+U2048L compute: I sched_reserve:      CUDA0 compute buffer size =  1580.39 MiB;I sched_reserve:      CUDA0 compute buffer size =  1296.33 MiB;I sched_reserve:      CUDA0 compute buffer size =  1580.39 MiB;I sched_reserve:      CUDA0 compute buffer size =   585.33 MiB;I sched_reserve:      CUDA0 compute buffer size =   585.33 MiB;I sched_reserve:      CUDA0 compute buffer size =  1580.39 MiB;I sched_reserve:      CUDA0 compute buffer size =  1580.39 MiB;  vram_after=11956 MiB
+stopped 1
+=== done 08:42

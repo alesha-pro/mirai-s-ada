@@ -1,0 +1,27 @@
+=== ML2e-low 2026-10-06 00:25 engine f0c1cda47
+C:/Users/pwall/Projects/mirai-s-serve/logs/product_ml2e.log:listen 0.0.0.0:8080  think=True effort=medium budget=20480  harness-proofing=True  backend-sampling=True
+C:/Users/pwall/Projects/mirai-s-serve/logs/product_ml2e.log:layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+C:/Users/pwall/Projects/mirai-s-serve/logs/product.launcher.log:listen 0.0.0.0:8080  think=True effort=medium budget=20480  harness-proofing=True  backend-sampling=True
+| --- | --- | ---: | ---: | --- |
+| coding | suite-tar-01 | 0/4 | 4/4 | 4 / 0 |
+| coding | xfer-mime-01 | 4/4 | 0/4 | 0 / 4 |
+| coding | xfer-zip-01 | 2/4 | 4/4 | 2 / 0 |
+| computation | digits | 0/3 | 3/3 | 3 / 0 |
+| computation | knapsack | 2/3 | 3/3 | 1 / 0 |
+| computation | lcs | 0/3 | 3/3 | 3 / 0 |
+| computation | sales | 2/3 | 3/3 | 1 / 0 |
+| computation | weblog | 2/3 | 3/3 | 1 / 0 |
+| **total** | | **12/27** | **23/27** | **15 / 4** |
+
+completion tokens: mirai-raw 593,619, mirai-layer 379,993
+| computation | sales | 2 | pass | pass | pass | pass |  |
+| computation | sales | 3 | pass | pass | pass | pass |  |
+| computation | weblog | 1 | fail | pass | pass | pass | mirai-raw: fail->pass |
+| computation | weblog | 2 | fail | pass | pass | pass | mirai-raw: fail->pass |
+| computation | weblog | 3 | pass | pass | fail | pass | mirai-raw: pass->fail |
+| run / arm | coding | computation | workspace | total | tokens |
+ML2b: rescues 12, losses 2 (mirai-layer vs mirai-raw)
+ML2e-low: rescues 15, losses 4 (mirai-layer vs mirai-raw)
+=== product start 2026-10-06 04:11 engine f0c1cda47: inner health=1 vram=11459 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+=== done 04:11; product restored with defaults
