@@ -1,0 +1,13 @@
+=== ML2f 2026-10-06 07:32 engine f0c1cda47 layer 42a9c06
+reasoning-effort-allow medium
+{"family": "coding", "name": "xfer-mime-01", "seed": 8, "arm": "mirai-raw", "ok": false, "tokens": 14717, "wall_s": 214.1, "detail": ["hidden1:unrecoverable_json", "hidden2:unrecoverable_json", "hidden3:invalid_request_n
+
+| family | task | mirai-raw | mirai-layer | rescues / losses (B vs A) |
+| --- | --- | ---: | ---: | --- |
+| coding | suite-tar-01 | 0/4 | 2/4 | 2 / 0 |
+| coding | xfer-mime-01 | 0/4 | 0/4 | 0 / 0 |
+| coding | xfer-zip-01 | 3/4 | 3/4 | 1 / 1 |
+| **total** | | **3/12** | **5/12** | **3 / 1** |
+
+completion tokens: mirai-raw 240,413, mirai-layer 236,170
+=== done 09:32

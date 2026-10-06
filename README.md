@@ -14,7 +14,7 @@ own llama.cpp fork before anything else was measured.
 | prefill, 16.8k-token prompt | ~1,000 | **1,090** (2048 micro-batch mode: 1,148) |
 | speculative decoding | none | MTP draft at every depth, outputs identical to drafting off |
 | HumanEval 164, greedy, tests executed in a sandbox | | **158** at medium or at effort "low"; 154 thinking off |
-| long exact-work suite, 37 tasks, raw / behind the layer | 13 / 30 (on the model's fork) | **18 / 28** (12 rescues, 2 losses); coding family 4 / 7 of 12, 6 / 8 at effort "low" |
+| long exact-work suite, 37 tasks, raw / behind the layer | 13 / 30 (on the model's fork) | **18 / 28** (12 rescues, 2 losses); coding family over two seed sets 7 / **12** of 24, at effort "low" 6 / 8 of 12 |
 | apps that send `effort: "high"` | template error on every request | answered (normalized to medium) |
 
 Receipts for every row are in `receipts/mirai-port/` and `bench/`; how each number was obtained, and what did not
