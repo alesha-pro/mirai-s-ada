@@ -104,7 +104,7 @@ MIRAI_CVEC=models/Qwen3.8-27B-S-mirai-refusal-direction.gguf ./start-server.sh
 
 On any platform it is two more arguments on the `llama-server` line:
 `--control-vector-scaled models/Qwen3.8-27B-S-mirai-refusal-direction.gguf:1.0 --cvec-mode project`
-(`start-server.ps1` does not pass them yet).
+(`start-server.ps1` does not pass them yet). The reference fork `alesha-pro/llama.cpp-mirai-s` takes the same two arguments.
 
 Measured on this serve (Ubuntu, RTX 3090, the template's system block in every prompt; `receipts/ubuntu-3090/`).
 A refusal is a regex on the start of the answer, greedy unless marked sampled:
@@ -179,14 +179,16 @@ Linux (checked on Ubuntu 22.04, RTX 3090, CUDA 12.8 toolkit, gcc 11.4, cmake 3.2
 
 ```bash
 git clone --recurse-submodules https://github.com/professorpalmer/mirai-s-ada && cd mirai-s-ada
-cmake -S engine -B build -DCMAKE_BUILD_TYPE=Release -DGGML_CUDA=ON -DCUDAToolkit_ROOT=/usr/local/cuda -DLLAMA_CURL=OFF
+cmake -S engine -B build -DCMAKE_BUILD_TYPE=Release -DGGML_CUDA=ON -DLLAMA_CURL=OFF \
+  -DCUDAToolkit_ROOT=/usr/local/cuda -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc
 cmake --build build -j --target llama-server            # about 4 min on 32 threads
 hf download alesha-pro/Qwen3.8-27B-S-mirai-GGUF --local-dir models
 MIRAI_KV_VRAM_CELLS=44000 ./start-server.sh             # raw server on http://127.0.0.1:8080/v1
 ```
 
-Point `CUDAToolkit_ROOT` at a CUDA 12 or 13 toolkit: with a system cuBLAS 11 the int8 GEMM of the prompt path runs on
-a tile about half as fast. For another GPU generation add `-DCMAKE_CUDA_ARCHITECTURES=<sm>` (86 = RTX 30, 89 = RTX 40).
+Point both CUDA paths at a CUDA 12 or 13 toolkit. On this box an older system `nvcc` was first on the PATH and the
+configure step failed without the compiler path; with a system cuBLAS 11 the int8 GEMM of the prompt path runs on a
+tile about half as fast. For another GPU generation add `-DCMAKE_CUDA_ARCHITECTURES=<sm>` (86 = RTX 30, 89 = RTX 40).
 `start-server.sh` is the raw server only: the same flags and environment as `start-server.ps1`, no layer, no automatic
 sizing of the VRAM line (set `MIRAI_KV_VRAM_CELLS` for your card). The knobs table above applies; it also reads
 `MIRAI_HOST`, `MIRAI_API_KEY`, `MIRAI_MMPROJ` (images, encoder on the CPU) and `MIRAI_CVEC` (below).
