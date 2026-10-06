@@ -180,7 +180,7 @@ Linux (checked on Ubuntu 22.04, RTX 3090, CUDA 12.8 toolkit, gcc 11.4, cmake 3.2
 ```bash
 git clone --recurse-submodules https://github.com/professorpalmer/mirai-s-ada && cd mirai-s-ada
 cmake -S engine -B build -DCMAKE_BUILD_TYPE=Release -DGGML_CUDA=ON -DLLAMA_CURL=OFF \
-  -DCUDAToolkit_ROOT=/usr/local/cuda -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc
+  -DCUDAToolkit_ROOT=/usr/local/cuda -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc -DCMAKE_CUDA_ARCHITECTURES=86
 cmake --build build -j --target llama-server            # about 4 min on 32 threads
 hf download alesha-pro/Qwen3.8-27B-S-mirai-GGUF --local-dir models
 MIRAI_KV_VRAM_CELLS=44000 ./start-server.sh             # raw server on http://127.0.0.1:8080/v1
@@ -188,7 +188,9 @@ MIRAI_KV_VRAM_CELLS=44000 ./start-server.sh             # raw server on http://1
 
 Point both CUDA paths at a CUDA 12 or 13 toolkit. On this box an older system `nvcc` was first on the PATH and the
 configure step failed without the compiler path; with a system cuBLAS 11 the int8 GEMM of the prompt path runs on a
-tile about half as fast. For another GPU generation add `-DCMAKE_CUDA_ARCHITECTURES=<sm>` (86 = RTX 30, 89 = RTX 40).
+tile about half as fast. `CMAKE_CUDA_ARCHITECTURES` is your GPU generation (86 = RTX 30, 89 = RTX 40); without it an
+older cmake builds the kernels for every generation, which took 17 minutes here. A clone of this branch built and
+served with exactly these lines.
 `start-server.sh` is the raw server only: the same flags and environment as `start-server.ps1`, no layer, no automatic
 sizing of the VRAM line (set `MIRAI_KV_VRAM_CELLS` for your card). The knobs table above applies; it also reads
 `MIRAI_HOST`, `MIRAI_API_KEY`, `MIRAI_MMPROJ` (images, encoder on the CPU) and `MIRAI_CVEC` (below).
