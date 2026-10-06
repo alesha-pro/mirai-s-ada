@@ -54,6 +54,10 @@ the CPU's integrated GPU (see "Getting more positions into VRAM").
   layer with `"api_cards": false`): send `reasoning_effort: "low"`, and launch with `MIRAI_EFFORT_ALLOWED=low,medium`
   so the server lets it through. Measured on the suite's coding family, raw: 4 -> 6 of 12 at the same seeds, the MIME
   task 0 -> 4 of 4, HumanEval unchanged at 158/164; the cost is longer tool loops (+31% completion tokens).
+- **Sessions that stay under ~28k tokens and want the fastest decode**: `MIRAI_SPEC_TYPE=dflash` with the Q4_0
+  DFlash drafter from `ggml-org/Qwen3.8-27B-GGUF` in `models\`. Measured (E22, three runs): 86 / 78 tok/s at 0 / 16k
+  against 76 / 72 with the MTP block, greedy outputs identical, acceptance 70% at draft 3; drafts of 4 or more lose.
+  It costs ~17k of the 45k positions in VRAM, which is why the default keeps the MTP block for long agent sessions.
 - **Tool-heavy agents that want speed over depth**: `chat_template_kwargs: {"enable_thinking": false}` per request
   (HumanEval 154/164 at 0.19x the tokens).
 
@@ -66,7 +70,8 @@ the CPU's integrated GPU (see "Getting more positions into VRAM").
 | `MIRAI_TIER` | 1 | 0 = all-VRAM cache (then a 64k window) |
 | `MIRAI_KV_VRAM_CELLS` | auto | pin the VRAM line |
 | `MIRAI_VRAM_MARGIN` | 800 headless / 1300 with the display on this card | MiB kept free below the demotion point |
-| `MIRAI_SPEC` / `MIRAI_SPEC_DEEP` | 2 / 2 | draft size, and past the VRAM line |
+| `MIRAI_SPEC` / `MIRAI_SPEC_DEEP` | 2 / 2 (3 with dflash) | draft size, and past the VRAM line |
+| `MIRAI_SPEC_TYPE` / `MIRAI_DRAFTER` | mtp / `models\dflash-Qwen3.8-27B-Q4_0.gguf` | `dflash` drafts with ggml-org's DFlash drafter instead of the GGUF's MTP block: +13% decode at depth 0, +8.5% at 16k, outputs identical, ~590 MiB more VRAM (~17k fewer positions in VRAM). Download the drafter from `ggml-org/Qwen3.8-27B-GGUF` into `models\` |
 | `MIRAI_DRAFT_WINDOW` | 16384 | rows the draft block keeps |
 | `MIRAI_EFFORT` / `MIRAI_EFFORT_ALLOWED` | medium / medium | server default effort; effort words the template sees (others become medium) |
 | `MIRAI_THINK` / `MIRAI_THINK_BUDGET` | 1 / 20480 | thinking on; tokens before a forced close |

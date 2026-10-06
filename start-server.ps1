@@ -1,8 +1,8 @@
-# Mirai S 27B server (LAN + localhost) on a 12 GB card, on our engine, with the serving stack from bonsai-ada-surgery.
+# Mirai S 27B server (LAN + localhost) on a 12 GB card, on our engine, with the Bonsai serving stack.
 # STATUS 2026-10-04 (feature tests A/B/C, receipts/mirai-port/feature_tests.log, DECISIONS.md): defaults are the
 # measured configuration: the full 262,144-token window with q8_0 K/V (tiered: the first ~32k positions in VRAM,
 # the rest in pinned system RAM), MTP drafting on the GGUF's own draft block, -b 2048 -ub 512, harness-proofing,
-# the layer. Greedy outputs identical to the reference fork in every arm. Decode with MTP: 77 / 72 / 68 / 65 tok/s at
+# the layer. Greedy outputs identical to the stock fork in every arm. Decode with MTP: 77 / 72 / 68 / 65 tok/s at
 # 0 / 16k / 32k / 60k in a 64k all-VRAM window; with the 262k window the VRAM line sits at ~41k positions (tail
 # draft 2) and decode past it is PCIe-bound: 32 at 60k, 15 at 120k (no draft: 14.6 / 6.2).
 # The budget behind that: Mirai keeps 8,220 MiB of weights resident (its F16 token embedding stays in host RAM);
@@ -11,7 +11,7 @@
 # 1.85x decode below the line for a line at ~70k positions (long-context mode).
 #   MIRAI_SPEC=0|2         draft size (2 = default)        MIRAI_TIER=0        64k all-VRAM window instead
 #   MIRAI_CTX=N            window (262144)                  MIRAI_KV_VRAM_CELLS pin the VRAM line
-#   MIRAI_VRAM_MARGIN=MiB  headroom (1000 headless / 1300 with the display on this card, from the stack's soaks)
+#   MIRAI_VRAM_MARGIN=MiB  headroom (1000 headless / 1300 with the display on this card, from the Bonsai soaks)
 $ErrorActionPreference = 'Stop'
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Bin = Join-Path $Root 'bin'
@@ -44,7 +44,7 @@ if (-not (Test-Path $ApiKeyFile)) {
 $ApiKey = (Get-Content -Path $ApiKeyFile -Raw).Trim()
 
 # ---- Context and KV precision ------------------------------------------------------------------------
-# q8_0 K/V (1 flipped top token in 160 at depth vs 1 in 48 for q4_0, measured there; the KL-by-position
+# q8_0 K/V as on Bonsai (1 flipped top token in 160 at depth vs 1 in 48 for q4_0, measured there; the KL-by-position
 # sweep is still to be run on Mirai). Tiered KV (--kv-vram-cells N): cells [0, N) in VRAM, the rest in pinned system
 # RAM mapped into the same CUDA range, bit-identical output; past N a step reads the RAM tail over PCIe.
 $Tier = ($env:MIRAI_TIER -ne '0') -and $HasTier
@@ -54,7 +54,7 @@ $Port = if ($env:MIRAI_PORT) { [int]$env:MIRAI_PORT } else { 8080 }
 
 # ---- Reasoning ------------------------------------------------------------------------------------------
 # templates\bonsai-template.jinja: the template every measurement here used, on both models (reasoning_effort,
-# enable_thinking). Medium with a 20k thinking budget was tuned on the stack's previous model; on Mirai it was the starting point and held (HumanEval grid 2026-10-05), not a
+# enable_thinking). Medium with a 20k thinking budget was tuned on Bonsai; on Mirai it is the starting point, not a
 # measured optimum (DECISIONS.md will say when it is). Passed through the environment, not the command line:
 # PowerShell 5.1 and 7.3+ quote embedded double quotes differently for native programs.
 $Effort = if ($env:MIRAI_EFFORT) { $env:MIRAI_EFFORT } else { 'medium' }
@@ -81,22 +81,33 @@ if ($env:MIRAI_BS -ne '0') { $BsArgs += '--backend-sampling' }
 
 # ---- Speculative decoding (the GGUF's own MTP block, blk.64 in Q8_0) ------------------------------------
 # MIRAI_SPEC = draft size (0 = off). Feature test A: draft 2 gives 1.85x decode at every depth of a 64k window with
-# outputs identical to the reference fork. Drafting at every depth: the draft context keeps the last MIRAI_DRAFT_WINDOW
+# outputs identical to the stock fork. Drafting at every depth: the draft context keeps the last MIRAI_DRAFT_WINDOW
 # rows; past the tiered-KV line the draft size is MIRAI_SPEC_DEEP (a PCIe-bound step makes extra verify columns
 # nearly free). GGML_CUDA_BATCH_INVARIANT=1 keeps per-column mat-vec arithmetic independent of the batch width.
-$Spec = if ($env:MIRAI_SPEC) { [int]$env:MIRAI_SPEC } else { 2 }
+$Spec = if ($env:MIRAI_SPEC) { [int]$env:MIRAI_SPEC } elseif ($env:MIRAI_SPEC_TYPE -and $env:MIRAI_SPEC_TYPE.ToLower() -eq 'dflash') { 3 } else { 2 }
 # Tail draft past the VRAM line: every unit of rollback depth keeps one 150 MiB snapshot of the recurrent state
 # (~4.5k K/V positions). Measured 2026-10-05 (receipts/mirai-port/tail_draft.log) at 60k / 120k: tail 2 32.2 / 15.1,
 # tail 3 37.0 / 17.8, tail 4 38.8 / 19.3 tok/s against 14.6 / 6.2 with no draft. Tail 2 costs nothing beyond what
 # drafting below the line already needs and moves the line up ~9k positions; MIRAI_SPEC_DEEP=4 buys +20% past it.
 $SpecDeep = if ($env:MIRAI_SPEC_DEEP) { [int]$env:MIRAI_SPEC_DEEP } else { 2 }
 $DraftWindow = if ($env:MIRAI_DRAFT_WINDOW) { [int]$env:MIRAI_DRAFT_WINDOW } else { 16384 }
+# MIRAI_SPEC_TYPE: mtp (default: the GGUF's own draft block, draft 2) or dflash (ggml-org's dflash-Qwen3.8-27B drafter,
+# draft 3). Measured 2026-10-06 (E22): dflash draft 3 decodes +13% at depth 0 and +8.5% at 16k (86 / 78 vs 76 / 72 tok/s),
+# outputs identical, for ~590 MiB more VRAM (~17k fewer positions on the line); drafts of 4+ lose acceptance and VRAM.
+# A mode for short-context speed; the default keeps the positions. MIRAI_DRAFTER = drafter path (Q4_0 recommended).
+$SpecType = if ($env:MIRAI_SPEC_TYPE) { $env:MIRAI_SPEC_TYPE.ToLower() } else { 'mtp' }
+$Drafter = if ($env:MIRAI_DRAFTER) { $env:MIRAI_DRAFTER } else { Join-Path $Root 'models\dflash-Qwen3.8-27B-Q4_0.gguf' }
+if ($SpecType -eq 'dflash' -and -not (Test-Path $Drafter)) { Write-Host "drafter not found: $Drafter (download dflash-Qwen3.8-27B-Q4_0.gguf from ggml-org/Qwen3.8-27B-GGUF into models\); using the MTP block"; $SpecType = 'mtp' }
 [string[]]$SpecArgs = @()
 $DraftCells = 0
 if ($Spec -gt 0) {
-    $SpecArgs = @('--spec-type', 'draft-mtp', '--spec-draft-n-max', "$Spec", '-ctkd', $Ctk, '-ctvd', $Ctk)
+    if ($SpecType -eq 'dflash') {
+        $SpecArgs = @('--spec-type', 'draft-dflash', '-md', $Drafter, '--spec-draft-n-max', "$Spec", '-ctkd', $Ctk, '-ctvd', $Ctk)
+    } else {
+        $SpecArgs = @('--spec-type', 'draft-mtp', '--spec-draft-n-max', "$Spec", '-ctkd', $Ctk, '-ctvd', $Ctk)
+    }
     if ($HasTier) {
-        $SpecArgs += @('--spec-draft-window', "$DraftWindow")
+        if ($SpecType -ne 'dflash') { $SpecArgs += @('--spec-draft-window', "$DraftWindow") }
         $DraftCells = $DraftWindow + 2 * 2048 + 256
     }
 }
@@ -115,7 +126,7 @@ $env:GGML_MIRAI_LEVELS_MIB = "$LevelsMiB"
 $LevelsExtraMiB = [int](0.66 * ($LevelsMiB - 128))   # measured at load: 11,455 MiB at 64, 11,497 at 128 (the 8,220 fixed cost was taken at ~this footprint)
 
 # ---- Tiered KV sizing -----------------------------------------------------------------------------------
-# Bytes per KV cell (16 attention layers x K+V x 4 heads x 256 dims, as in Qwen3.5-class hybrids); the
+# Bytes per KV cell (16 attention layers x K+V x 4 heads x 256 dims, same architecture as Bonsai 2 27B); the
 # per-layer staging buffer for the host tail is 1/16 of that. Fixed cost = everything but the K/V head and staging,
 # measured against nvidia-smi's free VRAM on 2026-10-04 (feature tests B and C, -b 2048 -ub 512, 262k window):
 # 8,220 MiB without drafting; with drafting add 150 MiB per unit of rollback depth (max of draft and tail sizes:
@@ -135,7 +146,7 @@ if ($Tier) {
         $Headless = ((& nvidia-smi --query-gpu=display_active --format=csv,noheader | Select-Object -First 1).Trim()) -eq 'Disabled'
         # Headless margin measured on Mirai 2026-10-05 (receipts/mirai-port/margin_soak.log): 10-minute soaks at
         # 4k/16k/32k, 800 MiB held twice (worst decode 67.3 / 67.4 tok/s, no demotion) and 600 also held once; the
-        # pre-declared gate adopted 800 (~45.8k positions in VRAM). 1300 with the display on this card (earlier soak).
+        # pre-declared gate adopted 800 (~45.8k positions in VRAM). 1300 with the display on this card (Bonsai soak).
         $Margin = if ($env:MIRAI_VRAM_MARGIN) { [int]$env:MIRAI_VRAM_MARGIN } elseif ($Headless) { 800 } else { 1300 }
         $Depth = [math]::Max($Spec, $(if ($Spec -gt 0) { $SpecDeep } else { 0 }))
         # 664 = draft context 175 + CUDA-side overhead of a second context ~490, measured as the remainder of the
@@ -144,7 +155,12 @@ if ($Tier) {
         # 2048 micro-batch (MIRAI_UBATCH=2048, packed mask): measured at load 11,595 MiB with 31,600 cells vs 11,339 with 40,960 at
         # 1024 (ub2048_probe.log), i.e. +567 MiB of activation buffers for +5.6% prefill: a mode, not the default
         $UBatchMiB = if ($Packed -and $UBatch -ge 2048) { 611 } elseif ($Packed -and $UBatch -ge 1024) { 44 } elseif (-not $Packed -and $UBatch -ge 1024) { 395 } else { 0 }
-        $FixedMiB = if ($env:MIRAI_FIXED_MIB) { [int]$env:MIRAI_FIXED_MIB } elseif ($Spec -gt 0) { 8220 + 150 * $Depth + 664 + $UBatchMiB + $LevelsExtraMiB } else { 8220 + $UBatchMiB + $LevelsExtraMiB }
+        # dflash: resident weights without the MTP block plus the drafter and its context; MIRAI_DFLASH_FIXED_MIB is the
+        # measured "everything but K/V and snapshots" of the dflash launch (set from receipts/mirai-port/dflash_probe.log)
+        # measured 2026-10-06 (dflash_probe.log, DF3 at 40,960 cells): 11,925 MiB at load = 1,360 K/V + 544 staging + 450 snapshots
+        # + 44 micro-batch + 9,527 of weights (MTP block skipped) + drafter layers + contexts; the MTP serve is 8,884 on the same terms
+        $DflashFixed = if ($env:MIRAI_DFLASH_FIXED_MIB) { [int]$env:MIRAI_DFLASH_FIXED_MIB } else { 9530 }
+        $FixedMiB = if ($env:MIRAI_FIXED_MIB) { [int]$env:MIRAI_FIXED_MIB } elseif ($Spec -gt 0 -and $SpecType -eq 'dflash') { $DflashFixed + 150 * $Depth + $UBatchMiB + $LevelsExtraMiB } elseif ($Spec -gt 0) { 8220 + 150 * $Depth + 664 + $UBatchMiB + $LevelsExtraMiB } else { 8220 + $UBatchMiB + $LevelsExtraMiB }
         $Budget = ($FreeMiB - $Margin - $FixedMiB) * 1MB - $Ctx * $CellBytes / 16
         $TierCells = [int]([math]::Floor($Budget / ($CellBytes * 15 / 16) / 256) * 256)
     }
@@ -162,7 +178,7 @@ if ($Tier) {
 Write-Host "model  $(Split-Path $Model -Leaf)  (Mirai S, trellis 2.4b, on engine $(if (Test-Path (Join-Path $Root 'engine\.git')) { (git -C (Join-Path $Root 'engine') rev-parse --short HEAD) } else { '?' }))"
 Write-Host "window $Ctx / $Ctk"
 if ($TierCells -gt 0) { Write-Host "kv     tiered: cells 0..$TierCells in VRAM, $TierCells..$Ctx in system RAM (VRAM margin $Margin MiB)" }
-Write-Host "spec   draft $Spec$(if ($TierCells -gt 0 -and $Spec -gt 0) { " ($SpecDeep past the VRAM line)" })$(if ($HasTier -and $Spec -gt 0) { ", draft window $DraftWindow" })"
+Write-Host "spec   $SpecType draft $Spec$(if ($TierCells -gt 0 -and $Spec -gt 0) { " ($SpecDeep past the VRAM line)" })$(if ($HasTier -and $Spec -gt 0 -and $SpecType -ne 'dflash') { ", draft window $DraftWindow" })"
 Write-Host "listen 0.0.0.0:$Port  think=$Think effort=$Effort budget=$ThinkBudget  harness-proofing=$($HarnessArgs.Count -gt 0)  backend-sampling=$($BsArgs.Count -gt 0)"
 Write-Host "prefill ubatch $UBatch  mask=$(if ($Packed) { 'packed 1-bit' } else { 'f16' })  planes=$($env:GGML_MIRAI_PREFILL_PLANES)  level chunk $LevelsMiB MiB"
 Write-Host "api    Authorization: Bearer <artifacts/api_key.txt>"

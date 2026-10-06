@@ -34,3 +34,12 @@ alesha-pro/llama.cpp-mirai-s and verified greedy token-for-token against it).
 
 Credits: alesha-pro (model, codec, fork), PrismML (the llama.cpp fork), sudoingX (planar activations, batch-invariant
 mode). Not affiliated with either.
+
+## bundle-20261006b (same day)
+
+- Engine f11c75618: a drafter graph that borrows the Mirai head (DFlash, DSpark) now finds the codec's tensors through
+  the target model; the earlier binaries aborted at drafter load.
+- `MIRAI_SPEC_TYPE=dflash`: ggml-org's DFlash drafter for Qwen3.8-27B at draft 3, +13% decode at depth 0 and +8.5% at
+  16k with identical outputs, for ~590 MiB of VRAM; a mode, the MTP block stays the default (receipt:
+  `receipts/mirai-port/dflash_probe.log`).
+
