@@ -8,8 +8,7 @@ Running notes, newest at the bottom. Method: paired runs, frozen plans and gates
 `alesha-pro/Qwen3.8-27B-S-mirai-GGUF` (sha256 5aa4365c...), 11.17 GB. Qwen3.8-27B-S weights in four trellis-coded
 ggml types (`MS_V4T8`, `MS_V2T4`, `MS_V2T6`, `MS_I3`, ids 90-93 in the engine), about 2.4 bits of information per
 weight; model-wide rotation tensors (`mirai.rot.*`), a head auxiliary tensor (`mirai.head_aux`), a split attention
-gate, and the MTP draft block (`blk.64`) in Q8_0 inside the same file. For scale: a ternary 1.75-bpw 27B is
-ternary, 6.4 GB with its grafted MTP head.
+gate, and the MTP draft block (`blk.64`) in Q8_0 inside the same file.
 
 ## 2. The records (stock fork, this card)
 
@@ -61,7 +60,7 @@ checked first in every arm (5/5 each time). `receipts/mirai-port/feature_tests.l
 | C: B + MTP (tail draft 4) | 262,144 | 11.3 GB | **77.0 / 67.9 / 38.7 / 19.5 / 12.6** at 0 / 32k / 60k / 120k / 180k |
 
 The arithmetic behind B: a q8_0 K/V cell for this architecture is 34,816 bytes (16 attention layers, K+V, 4 heads x
-256). Mirai keeps 8,220 MiB of weights resident, so where a 4.4 GB ternary model's line would sit near 113k
+256). Mirai keeps 8,220 MiB of weights resident, so the line sits
 positions, Mirai's sits at ~32k with drafting (~70k without); past it every step reads the host tail over PCIe (27k
 rows, 0.9 GB, at 60k; 87k rows, 3 GB, at 120k), which is B's 14.6 and 6.2. The tail draft in C turns that into 2.65x:
 a PCIe-bound step reads the tail once per verify batch, so the extra draft columns cost almost nothing. 38.7 tok/s at

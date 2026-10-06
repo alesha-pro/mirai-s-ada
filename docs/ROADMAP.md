@@ -53,7 +53,7 @@ bottleneck; measure its share with the op table at 2k / 16k prompts before touch
 ## 7. Beyond serving: our own quantization of this family
 
 Everything above keeps the weights as published. The next class of leftover is the quantization itself: Mirai's
-trellis codes sit at ~2.4 bits of information; a ternary 27B at 1.75 bpw. What a 12 GB card wants is a 27B-class
+trellis codes sit at ~2.4 bits of information. What a 12 GB card wants is a 27B-class
 model whose resident weights leave room for a long cache AND a draft head, i.e. a ~2 bpw codec with Mirai-class
 quality. Prerequisites before any of this is more than a note: the teacher weights (Qwen3.8-27B), a calibration set
 that is not the suite, a KL-by-position harness against the teacher (exists on this stack), and a quantizer we can run
