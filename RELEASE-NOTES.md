@@ -1,4 +1,4 @@
-# mirai-s-ada, first release (draft; numbers marked TBD are filled from ML2f / E21 before the tag)
+# mirai-s-ada, first release (bundle-20261006)
 
 Mirai S 27B (alesha-pro's Qwen3.8-27B-S trellis GGUF, 11.17 GB) served on an RTX 4070 12 GB with:
 
