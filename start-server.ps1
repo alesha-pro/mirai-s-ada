@@ -2,7 +2,7 @@
 # STATUS 2026-10-04 (feature tests A/B/C, receipts/mirai-port/feature_tests.log, DECISIONS.md): defaults are the
 # measured configuration: the full 262,144-token window with q8_0 K/V (tiered: the first ~32k positions in VRAM,
 # the rest in pinned system RAM), MTP drafting on the GGUF's own draft block, -b 2048 -ub 512, harness-proofing,
-# the layer. Greedy outputs identical to the stock fork in every arm. Decode with MTP: 77 / 72 / 68 / 65 tok/s at
+# the layer. Greedy outputs identical to the reference fork in every arm. Decode with MTP: 77 / 72 / 68 / 65 tok/s at
 # 0 / 16k / 32k / 60k in a 64k all-VRAM window; with the 262k window the VRAM line sits at ~41k positions (tail
 # draft 2) and decode past it is PCIe-bound: 32 at 60k, 15 at 120k (no draft: 14.6 / 6.2).
 # The budget behind that: Mirai keeps 8,220 MiB of weights resident (its F16 token embedding stays in host RAM);
@@ -81,7 +81,7 @@ if ($env:MIRAI_BS -ne '0') { $BsArgs += '--backend-sampling' }
 
 # ---- Speculative decoding (the GGUF's own MTP block, blk.64 in Q8_0) ------------------------------------
 # MIRAI_SPEC = draft size (0 = off). Feature test A: draft 2 gives 1.85x decode at every depth of a 64k window with
-# outputs identical to the stock fork. Drafting at every depth: the draft context keeps the last MIRAI_DRAFT_WINDOW
+# outputs identical to the reference fork. Drafting at every depth: the draft context keeps the last MIRAI_DRAFT_WINDOW
 # rows; past the tiered-KV line the draft size is MIRAI_SPEC_DEEP (a PCIe-bound step makes extra verify columns
 # nearly free). GGML_CUDA_BATCH_INVARIANT=1 keeps per-column mat-vec arithmetic independent of the batch width.
 $Spec = if ($env:MIRAI_SPEC) { [int]$env:MIRAI_SPEC } else { 2 }

@@ -10,7 +10,7 @@ ggml types (`MS_V4T8`, `MS_V2T4`, `MS_V2T6`, `MS_I3`, ids 90-93 in the engine), 
 weight; model-wide rotation tensors (`mirai.rot.*`), a head auxiliary tensor (`mirai.head_aux`), a split attention
 gate, and the MTP draft block (`blk.64`) in Q8_0 inside the same file.
 
-## 2. The records (stock fork, this card)
+## 2. The starting point: alesha-pro's reference fork on this card
 
 Mirai's own fork (`alesha-pro/llama.cpp-mirai-s`, upstream d834d44e6), 64k q8 window, 11.0 GB: decode 40.0 / 39.6 /
 38.1 / 36.1 / 33.5 tok/s at depth 0 / 4k / 16k / 32k / 60k; prefill ~1000 tok/s at 4k falling to 600 at 60k. No
@@ -23,9 +23,9 @@ Mirai's codec (39 files, +3.2k lines over upstream) was merged onto our engine a
 server changes not taken because ours cover the same ground. One missed CUDA `supports_op` case first put all 417
 Mirai tensors in system RAM; fixed, the whole model sits on the GPU at the stock footprint.
 
-Verification: greedy, token-for-token against the stock fork's dumped outputs on five prompts, thinking off (200
+Verification: greedy, token-for-token against the reference fork's dumped outputs on five prompts, thinking off (200
 tokens) and on (300 tokens): identical on all ten. Speed, plain 64k q8 window: 41.1 / 38.9 / 37.2 / 34.4 tok/s at
-0 / 16k / 32k / 60k, +3% over the stock fork from our attention and GDN kernels; nothing Mirai-specific was tuned.
+0 / 16k / 32k / 60k, +3% over the reference fork from our attention and GDN kernels; nothing Mirai-specific was tuned.
 
 ## 4. MTP speculation, and the prefill collapse that was really a VRAM budget
 
@@ -49,7 +49,7 @@ window; it is what makes MTP fit at all. The product recipe is built on that bud
 
 ## 5. The serving stack on Mirai S: feature tests A, B, C
 
-All on the engine built in this repo, `-b 2048 -ub 512`, q8_0 K/V, greedy identity against the stock fork's dump
+All on the engine built in this repo, `-b 2048 -ub 512`, q8_0 K/V, greedy identity against the reference fork's dump
 checked first in every arm (5/5 each time). `receipts/mirai-port/feature_tests.log`.
 
 | arm | window | VRAM at load | decode tok/s by depth |
@@ -64,7 +64,7 @@ The arithmetic behind B: a q8_0 K/V cell for this architecture is 34,816 bytes (
 positions, Mirai's sits at ~32k with drafting (~70k without); past it every step reads the host tail over PCIe (27k
 rows, 0.9 GB, at 60k; 87k rows, 3 GB, at 120k), which is B's 14.6 and 6.2. The tail draft in C turns that into 2.65x:
 a PCIe-bound step reads the tail once per verify batch, so the extra draft columns cost almost nothing. 38.7 tok/s at
-60k in the 262k window beats the plain 64k window's 34.4 at the same depth.
+60k in the 262k window is above the plain 64k window's 34.4 at the same depth.
 
 Measured fixed VRAM cost against idle free VRAM (what the launcher's auto-sizing uses): 8,220 MiB without drafting,
 9,434 MiB with the MTP draft context. The draft context's 1,214 MiB is the largest leftover on this card: its K/V is
@@ -92,7 +92,7 @@ measured), the serve sizes the line to 39,424 positions at the 1,000 MiB margin 
 (`product_smoke.log`, 02:11). One launch in between ran with a wrong constant (50,688 cells, ~550 MiB headroom);
 its receipts are kept and marked as over budget, not cited.
 
-## 6. The layer in front of Mirai S (ML1, on the stock fork)
+## 6. The layer in front of Mirai S (ML1, on the reference fork)
 
 The suite paired, 74 runs, raw vs behind the layer with shipped defaults:
 
@@ -115,7 +115,7 @@ MTP, reasoning budget 20,480 with forced close, harness-proofing), 74 runs in 3.
 
 | | raw | layer | rescues / losses | tokens |
 | --- | ---: | ---: | --- | ---: |
-| ML1 (stock fork, no reasoning budget) | 13/37 | 30/37 | 17 / 0 | 488k -> 381k |
+| ML1 (reference fork, no reasoning budget) | 13/37 | 30/37 | 17 / 0 | 488k -> 381k |
 | ML2 (this serve) | **16/37** | **29/37** | **13 / 0** | 486k -> 377k |
 
 Per family on this serve: coding 3 -> 6 of 12 (tar 0 -> 2, ZIP 3 -> 4, MIME 0 -> 0), computation 5 -> 15 of 15,
@@ -171,7 +171,7 @@ normalize is checked against the server's own setting before a run.
 1. MTP prefill collapse (section 4).
 2. Tiered KV on Mirai: VRAM line, decode by depth, identity (section 5).
 3. Product recipe on this engine: reasoning budget and harness flags measured on Mirai (they were tuned on the stack's previous model),
-   then the suite re-paired on this engine (ML1 was the stock fork) and AppWorld raw.
+   then the suite re-paired on this engine (ML1 was the reference fork) and AppWorld raw.
 4. Beyond serving: the MTP block's acceptance rate on Mirai (on the stack's previous model an on-policy head gave
    +4.3 pp); KV precision at depth (KL by position, as done before on this stack); whether any of the model's own translation
    layers (trellis decode kernels, the head's aux path) leave speed on the table at batch 1 and at prefill width.

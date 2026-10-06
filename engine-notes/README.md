@@ -7,5 +7,5 @@ head auxiliary path, the split attention gate). Not taken from it: their GDN ker
 and server tweaks (ours cover the same ground). The port lives in `engine/` as three commits on top of the stack's
 product commit (`git -C engine log c8b8993a6..`); `engine/` has the fork as remote `mirai` for future diffs.
 
-Reference binary: the stock fork's own build, used for the profile and the greedy dumps in `receipts/mirai-port/`,
+Reference binary: the reference fork's own build, used for the profile and the greedy dumps in `receipts/mirai-port/`,
 is kept outside the repo at `%TEMP%\mirai-build\bin` (rebuild from the `mirai` remote if it is gone).

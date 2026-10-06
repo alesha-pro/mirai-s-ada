@@ -1,0 +1,70 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Mirai S on 12 GB: reference fork vs this serve</title>
+<!-- Renders one 1200x675 card per ?c= value (speed | quality); docs/img/render_cards.ps1 screenshots each at 2x. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root { --ground:#F3F5F1; --surface:#fff; --ink:#17211B; --muted:#5E6D63; --line:#DCE2DA; --grid:#E6EBE4;
+  --green:#2E7A57; --amber:#A86F16; --display:"IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif; --body:"IBM Plex Sans","Segoe UI",Arial,sans-serif; --mono:"IBM Plex Mono",Consolas,monospace; }
+html,body{margin:0;width:1200px;height:675px;overflow:hidden;background:var(--ground);color:var(--ink);font-family:var(--body)}
+.card{box-sizing:border-box;width:1200px;height:675px;padding:44px 56px 34px;display:flex;flex-direction:column;gap:12px}
+.eyebrow{font-family:var(--mono);font-size:16px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{margin:0;font-family:var(--display);font-size:42px;line-height:1.08;font-weight:700}
+.sub{font-size:18px;color:var(--muted);margin:0;max-width:1040px;line-height:1.35}
+.legend{display:flex;gap:22px;font-size:16px;color:var(--muted)} .legend span{display:inline-flex;align-items:center;gap:8px} .sw{width:14px;height:14px;border-radius:3px;display:inline-block}
+.chart{flex:1;min-height:0;display:flex;align-items:center} .chart svg{width:100%;height:100%}
+svg text{font-family:var(--mono);font-size:14px;fill:var(--muted)} svg .cat{font-family:var(--body);font-size:17px;fill:var(--ink)} svg .lbl{fill:var(--ink);font-size:15px;font-weight:500}
+.foot{display:flex;justify-content:space-between;font-family:var(--mono);font-size:14px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
+.foot b{color:var(--ink);font-weight:500}
+</style>
+<div class="card" id="card"></div>
+<script>
+var NS='http://www.w3.org/2000/svg';
+function el(t,a,txt){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);if(txt!==undefined)e.textContent=txt;return e;}
+var FOOT='<div class="foot"><span>RTX 4070 12 GB · Mirai S 27B (alesha-pro) · q8_0 KV · 2026-10-06 · receipts in the repo</span><span><b>github.com/professorpalmer/mirai-s-ada</b></span></div>';
+function card(eyebrow,title,sub,rows,opts){
+  // rows: [label, refVal, ourVal, max, refText, ourText]
+  var W=1088,L=(opts&&opts.L)||330,R=(opts&&opts.R)||170,rowH=(opts&&opts.rowH)||62,barH=18,H=rows.length*rowH+6;
+  var s=el('svg',{viewBox:'0 0 '+W+' '+H});
+  rows.forEach(function(r,i){var y0=i*rowH+4; s.appendChild(el('text',{class:'cat',x:L-14,y:y0+barH+7,'text-anchor':'end'},r[0]));
+    [[r[1],'#A86F16',r[4]],[r[2],'#2E7A57',r[5]]].forEach(function(b,j){var yy=y0+j*(barH+5); var w=Math.max(b[0]/r[3]*(W-L-R),4);
+      s.appendChild(el('rect',{x:L,y:yy,width:w,height:barH,rx:3,fill:b[1]})); s.appendChild(el('text',{class:'lbl',x:L+w+8,y:yy+barH-4},b[2]));});});
+  document.getElementById('card').innerHTML='<div class="eyebrow">'+eyebrow+'</div><h1>'+title+'</h1>'+(sub?'<p class="sub">'+sub+'</p>':'')+
+    '<div class="legend"><span><i class="sw" style="background:#A86F16"></i>alesha-pro’s reference fork (llama.cpp-mirai-s), the starting point</span><span><i class="sw" style="background:#2E7A57"></i>this serve: same weights, same card</span></div>'+
+    '<div class="chart" id="chart"></div>'+FOOT;
+  document.getElementById('chart').appendChild(s);
+}
+var cards={
+  speed:function(){card('Mirai S 27B · RTX 4070 12 GB · same weights','The full 262k window and drafting at every depth, on the same 12 GB card',
+    'Greedy outputs are token-identical to the reference fork in every arm; what changed is the cache, the drafting and the prompt path.',[
+    ['context window at q8_0 KV',64,262,262,'64k (11.0 GB)','262,144  (tiered: 45k in VRAM, rest in pinned RAM)'],
+    ['decode tok/s at 16k',38.1,71.4,80,'38.1','71.4  (MTP draft from the GGUF’s own block)'],
+    ['decode tok/s at 60k',33.5,40.3,80,'33.5 (window ends at 64k)','40.3  (past the VRAM line, host tail over PCIe)'],
+    ['decode tok/s at 120k / 180k',0,16.6,80,'window ends at 64k','16.6 / 10.3  (the window keeps going)'],
+    ['prefill tok/s, 16.8k prompt',1000,1090,1200,'~1,000','1,090  (one-plane FFN prompt path, KL 0.00028)'],
+    ['apps that send effort "high"',0,1,1,'template error','answered  (harness-proofing)'],
+  ],{R:420});},
+  quality:function(){card('Mirai S 27B · RTX 4070 12 GB · paired runs, same seeds','The same model answers more, with the layer and the right settings',
+    'Measured here with plans and gates frozen before results; raw = plain server, layer = API cards, API check, sandboxed Python in front of it.',[
+    ['long exact-work suite, 37 tasks: raw',13,18,37,'13 on the reference fork','18  (reasoning budget + forced close)'],
+    ['long exact-work suite, 37 tasks: behind the layer',30,28,37,'30 (ML1, layer on the reference fork)','28  (12 rescues, 2 losses; 0.77x tokens)'],
+    ['computation family (15), behind the layer',0,15,15,'raw 4-5 of 15','15 of 15, two seed sets'],
+    ['coding family (24 over two seed sets), behind the layer',7,12,24,'raw 7 of 24','12 of 24  (API check: tar 1 → 5 of 8)'],
+    ['the MIME task, raw at effort "low"',0,4,4,'0 of 4 at medium','4 of 4  (first passes on this model)'],
+    ['HumanEval 164, greedy, sandbox-scored',0,158,164,'not measured on the fork','158  (medium or low; 154 thinking off)'],
+  ],{L:440,R:300});}
+};
+cards.agentic=function(){card('Mirai S 27B · RTX 4070 12 GB · agents, tools and API clients','Built so the agent loop finishes',
+    'Every row is a failure mode an agent hits in practice, measured before and after on the same weights and card.',[
+    ['agent transcript that outgrows the window',64,262,262,'64k, then the context is gone','262,144 tokens, q8_0, same card'],
+    ['decode speed deep in a long session (60k)',33.5,40.3,80,'33.5 tok/s, window ends at 64k','40.3 tok/s and the session continues to 262k'],
+    ['apps that send effort "high" (Cline, Kilo, Open WebUI)',0,1,1,'template error on every request','answered, normalized to medium'],
+    ['apps with a 256-4096 token cap, thinking on',0,1,1,'cut off mid-think','cap raised to the thinking budget'],
+    ['runs lost to thinking until the cap (raw suite)',13,18,37,'13 of 37','18 of 37  (20k budget + forced close)'],
+    ['coding agent + the layer’s API check (24 runs)',7,12,24,'raw 7 of 24','12 of 24  (invented names flagged; tar 1 → 5 of 8)'],
+    ['exact computation behind the layer (15 tasks)',4,15,15,'raw 4 of 15','15 of 15  (sandboxed Python + input.txt)'],
+    ['raw coding agent, effort "low" (the recommended setting)',4,6,12,'4 of 12 at medium','6 of 12; the MIME task 0 → 4 of 4'],
+  ],{L:470,R:330,rowH:54});};
+var c=(location.search.match(/c=(\w+)/)||[])[1]||'speed'; (cards[c]||cards.speed)();
+document.fonts&&document.fonts.ready.then(function(){document.body.setAttribute('data-ready','1')});
+</script>

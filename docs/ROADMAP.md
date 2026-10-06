@@ -30,7 +30,7 @@ fail as it did there.
 Medium with a 20,480 budget and the forced close were tuned on the stack's previous model. On Mirai the
 suite smoke shows raw runs thinking to the cap on hard items. Proof: HumanEval 164 on the inner port at medium /
 low / off and budgets 8k / 20k / 32k (the same grid as before), then the suite's computation family at the two best
-settings. Gate: a setting beats medium/20k by >= 3 HumanEval and does not lose a suite pair.
+settings. Gate: a setting exceeds medium/20k by >= 3 HumanEval and does not lose a suite pair.
 
 ## 4. MTP acceptance (model-side; expected: +10-15% decode below the line, more above it)
 

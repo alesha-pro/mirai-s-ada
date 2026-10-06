@@ -4,7 +4,7 @@ Two servers cannot share a 12 GB card, so: dump the reference, swap, compare the
     python bench/compare_servers.py --base http://127.0.0.1:18081 --dump receipts/mirai-port/stock-greedy-nothink.json --n 200
     python bench/compare_servers.py --base http://127.0.0.1:18081 --against receipts/mirai-port/stock-greedy-nothink.json --n 200 [--think]
 
-The reference dumps in receipts/mirai-port were made on alesha-pro's stock fork (2026-10-04, 64k q8 window,
+The reference dumps in receipts/mirai-port were made on alesha-pro's reference fork (2026-10-04, 64k q8 window,
 templates/bonsai-template.jinja, reasoning_effort medium).
 """
 import argparse

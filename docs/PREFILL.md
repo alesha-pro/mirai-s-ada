@@ -135,5 +135,5 @@ candidate, bounded by the 27 GB of int8 the GEMM must read back anyway (54 ms pe
    a profile-then-kernel item; none is worth touching before 1-4.
 
 What it would add up to, if every expectation holds: ~1.6-1.8k tok/s, a 100k prompt in about a minute instead of
-two, with decode and the window unchanged. What it will not do: beat the card's dense ceiling. The first-token wait
+two, with decode and the window unchanged. What it will not do: pass the card's dense ceiling. The first-token wait
 on very long prompts is a property of 27B parameters on a 4070; the lever past this plan is caching, not kernels.

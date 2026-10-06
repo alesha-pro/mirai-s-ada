@@ -5,21 +5,25 @@ information per weight, 11.17 GB) served on an **RTX 4070 12 GB** with the **ful
 KV cache**, MTP speculative decoding from the GGUF's own draft block at every depth, harness-proofing for the apps
 that send `effort: "high"` or tiny output caps, and an optional server-side layer (exact API cards, an API check, a
 sandboxed Python tool). Same weights as published; every kernel checked greedy token-for-token against the model's
-own llama.cpp fork before anything else was measured.
+own llama.cpp fork before anything else was measured. This is a serving layer on top of alesha-pro's work, not a
+replacement for it: the codec, the model and the reference fork are theirs; the cache, drafting, server flags and
+measurements here are what a 12 GB card adds around them.
 
-| RTX 4070 12 GB, served, one slot | the model's own fork (`alesha-pro/llama.cpp-mirai-s`) | this serve |
+| RTX 4070 12 GB, served, one slot | alesha-pro's reference fork (`llama.cpp-mirai-s`, the starting point) | this serve |
 | --- | ---: | ---: |
 | context window with q8_0 KV | 64k (11.0 GB) | **262,144** (tiered: 44k positions in VRAM, the rest in pinned RAM) |
 | decode, tok/s, at 0 / 16k / 60k / 120k / 180k | 40.0 / 38.1 / 33.5 (60k) / - / - | **75.8 / 71.4 / 40.3 / 16.6 / 10.3** |
 | prefill, 16.8k-token prompt | ~1,000 | **1,090** (2048 micro-batch mode: 1,148) |
 | speculative decoding | none | MTP draft at every depth, outputs identical to drafting off |
 | HumanEval 164, greedy, tests executed in a sandbox | | **158** at medium or at effort "low"; 154 thinking off |
-| long exact-work suite, 37 tasks, raw / behind the layer | 13 / 30 (on the model's fork) | **18 / 28** (12 rescues, 2 losses); coding family over two seed sets 7 / **12** of 24, at effort "low" 6 / 8 of 12 |
+| long exact-work suite, 37 tasks, raw / behind the layer | 13 / 30 (on the reference fork) | **18 / 28** (12 rescues, 2 losses); coding family over two seed sets 7 / **12** of 24, at effort "low" 6 / 8 of 12 |
 | apps that send `effort: "high"` | template error on every request | answered (normalized to medium) |
 
 Receipts for every row are in `receipts/mirai-port/` and `bench/`; how each number was obtained, and what did not
 work, is in `docs/REPORT.md` and `docs/PREFILL.md`. Numbers are from 2026-10-05/06, GDDR6X at stock clocks, display on
 the CPU's integrated GPU (see "Getting more positions into VRAM").
+
+![Built so the agent loop finishes: window, depth, effort words, output caps, forced close, API check, sandboxed Python, effort low](docs/img/agentic.png)
 
 ## Quick start (Windows, NVIDIA)
 
@@ -39,6 +43,9 @@ the CPU's integrated GPU (see "Getting more positions into VRAM").
    The launcher reads free VRAM, keeps a safety margin below the point where Windows demotes a background process's
    memory, and puts as many positions of the 262k cache in VRAM as fit (about 44k headless on this card). It prints
    the line it chose.
+
+![Speed: the full 262k window and drafting at every depth on the same card](docs/img/speed.png)
+![Quality: the same model answers more, with the layer and the right settings](docs/img/quality.png)
 
 ## Recommended settings
 
@@ -82,6 +89,26 @@ Mirai keeps 8,220 MiB of weights resident; drafting keeps one 150 MiB snapshot o
 rollback depth (two at the default draft 2) plus ~660 MiB for the draft context. Past the line every step reads the
 host tail over PCIe; drafting there is worth 2.2x over no drafting. `MIRAI_SPEC=0` moves the line to ~70k positions
 at the cost of the 1.85x below it (`docs/REPORT.md`).
+
+## Known limits and issues
+
+- **12 GB is the floor.** 8.2 GB of weights stay resident; this model does not fit an 8 GB card, and the launcher
+  does not try.
+- **Past the VRAM line decode is PCIe-bound** (45k positions on a 12 GB card with the display on the iGPU; see the
+  decode table). A 16 GB card moves the line to ~175k by the launcher's arithmetic; not measured here.
+- **Host RAM**: the full 262k cache keeps ~7 GB of K/V in pinned system RAM; the box needs that much free.
+- **One slot** (`-np 1`), as the reference fork also requires for this model.
+- **Windows launcher.** The Linux command line above is the same recipe, untested here.
+- **Effort words outside the allow-list are normalized to medium** by design (harness-proofing). Agents that want
+  "low" need `MIRAI_EFFORT_ALLOWED=low,medium` at launch; a request's effort is never silently honored or rejected,
+  it is mapped, and the server log says so.
+- **Prompt numerics are one-plane for the FFN matmuls by default** (KL 0.00028 against exact, top-token agreement
+  99.2%, no suite pair moved). `MIRAI_PREFILL_PLANES=2` gives the exact path at -18% prefill.
+- **Library-heavy coding tasks remain hard for the model** (the suite's MIME task passes only raw at effort "low");
+  the layer's API check reduces invented names, it does not remove the model's limits.
+- **Sampled runs are deterministic for an identical request and seed**, with rare late divergence under cache
+  reuse (one in twelve 70k-character traces); treat small paired deltas as noise (`docs/REPORT.md`, determinism probe).
+- Report issues with the launcher's printed configuration block and `logs\product.log`.
 
 ## What is here
 
@@ -131,6 +158,16 @@ python suite\run_suite.py --base http://127.0.0.1:18080 --base-b http://127.0.0.
 python bench\humaneval_wasi.py --arm medium                    # HumanEval 164, sandbox-scored
 python bench\determinism_probe.py                             # same request and seed, seven conditions
 ```
+
+## Licenses and attribution
+
+- This repository (launcher, tooling, layer, suite, docs, receipts): MIT, Cary Palmer.
+- The engine (`engine/`): llama.cpp is MIT (the ggml authors); PrismML's fork and alesha-pro's fork are MIT; their
+  notices are preserved in the engine tree. The Mirai codec kernels are alesha-pro's work, ported with attribution in
+  the commit history and `engine/README.md`.
+- The model weights are not redistributed here. `Qwen3.8-27B-S-mirai-GGUF` is published by alesha-pro under the
+  license on its Hugging Face card (Qwen3.8 itself is Apache 2.0); download it from there and keep its notices.
+- Nothing here is affiliated with, endorsed by or sponsored by alesha-pro, PrismML or Alibaba's Qwen team.
 
 ## Credits
 
