@@ -1,0 +1,86 @@
+=== E22 dflash probe 2026-10-06 13:58 engine 78c6a2ac7
+MTP2 health=1 vram_used=11339 MiB
+MTP2 vram at load: 11339 MiB
+MTP2 identity vs greedy dump: 3 of 3 identical
+MTP2 decode at 0: mean decode 77.0 tok/s
+MTP2 decode at 16000: mean decode 72.1 tok/s
+MTP2 acceptance: draft acceptance  : n=9 median 74.0 p10 65.7 p90 89.6 %   mean draft len n=9 median 2.5 p10 2.3 p90 2.8 pooled acceptance : 78.2 % (1572 / 2009 drafted tokens) 
+MTP2 vram after: 11579 MiB
+[34m0.07.609.502[0m [32mI [0mcommon_speculative_init_result: loading draft model 'C:\Users\pwall\Projects\mirai-s-serve\models\dflash-Qwen3.8-27B-Q4_0.gguf'
+DF3: server not healthy; skipping
+[34m0.06.601.893[0m [32mI [0mcommon_speculative_init_result: loading draft model 'C:\Users\pwall\Projects\mirai-s-serve\models\dflash-Qwen3.8-27B-Q4_0.gguf'
+DF5: server not healthy; skipping
+[0mDF7: server not healthy; skipping
+DF5Q8 skipped: Q8 drafter not downloaded yet
+=== product start 2026-10-06 14:00 engine 78c6a2ac7: inner health=1 vram=11459 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+=== done 14:00; product restored (today's defaults)
+=== E22 dflash probe 2026-10-06 14:04 engine f11c75618
+MTP2 health=1 vram_used=11339 MiB
+MTP2 vram at load: 11339 MiB
+MTP2 identity vs greedy dump: 3 of 3 identical
+MTP2 decode at 0: mean decode 76.2 tok/s
+MTP2 decode at 16000: mean decode 71.8 tok/s
+MTP2 acceptance: draft acceptance  : n=9 median 74.0 p10 65.7 p90 89.6 %   mean draft len n=9 median 2.5 p10 2.3 p90 2.8 pooled acceptance : 78.2 % (1572 / 2009 drafted tokens) 
+MTP2 vram after: 11579 MiB
+DF3 health=1 vram_used=11925 MiB
+DF3 vram at load: 11925 MiB
+DF3 identity vs greedy dump: 3 of 3 identical
+DF3 decode at 0: mean decode 86.7 tok/s
+DF3 decode at 16000: mean decode 78.0 tok/s
+DF3 acceptance: draft acceptance  : n=9 median 66.7 p10 57.9 p90 81.8 %   mean draft len n=9 median 3.0 p10 2.7 p90 3.5 pooled acceptance : 70.1 % (1748 / 2493 drafted tokens) 
+DF3 vram after: 11971 MiB
+DF5 health=1 vram_used=11935 MiB
+DF5 vram at load: 11935 MiB
+DF5 identity vs greedy dump: 3 of 3 identical
+DF5 decode at 0: mean decode 77.9 tok/s
+DF5 decode at 16000: mean decode 55.2 tok/s
+DF5 acceptance: draft acceptance  : n=9 median 45.3 p10 36.5 p90 71.6 %   mean draft len n=9 median 3.3 p10 2.8 p90 4.6 pooled acceptance : 54.2 % (1882 / 3472 drafted tokens) 
+DF5 vram after: 11975 MiB
+[0mDF7: server not healthy; skipping
+DF5Q8 health=1 vram_used=11941 MiB
+DF5Q8 vram at load: 11941 MiB
+DF5Q8 identity vs greedy dump: 3 of 3 identical
+DF5Q8 decode at 0: mean decode 43.1 tok/s
+DF5Q8 decode at 16000: mean decode 35.2 tok/s
+DF5Q8 acceptance: draft acceptance  : n=9 median 45.3 p10 34.7 p90 73.5 %   mean draft len n=9 median 3.3 p10 2.7 p90 4.7 pooled acceptance : 54.6 % (1886 / 3452 drafted tokens) 
+DF5Q8 vram after: 11975 MiB
+=== product start 2026-10-06 14:20 engine f11c75618: inner health=1 vram=11459 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+=== done 14:20; product restored (today's defaults)
+=== E22b dflash on GPU (-ngld 99) 2026-10-06 14:21 engine f11c75618
+DF2G health=1 vram_used=11919 MiB
+DF2G vram at load: 11919 MiB
+DF2G identity vs greedy dump: 3 of 3 identical
+DF2G decode at 0: mean decode 73.0 tok/s
+DF2G decode at 16000: mean decode 69.7 tok/s
+DF2G acceptance: draft acceptance  : n=9 median 83.0 p10 62.1 p90 88.3 %   mean draft len n=9 median 2.6 p10 2.2 p90 2.8 pooled acceptance : 78.3 % (1572 / 2008 drafted tokens) 
+DF2G vram after: 11975 MiB
+DF3G health=1 vram_used=11925 MiB
+DF3G vram at load: 11925 MiB
+DF3G identity vs greedy dump: 3 of 3 identical
+DF3G decode at 0: mean decode 85.9 tok/s
+DF3G decode at 16000: mean decode 77.9 tok/s
+DF3G acceptance: draft acceptance  : n=9 median 66.7 p10 57.9 p90 81.8 %   mean draft len n=9 median 3.0 p10 2.7 p90 3.5 pooled acceptance : 70.1 % (1748 / 2493 drafted tokens) 
+DF3G vram after: 11973 MiB
+DF4G health=1 vram_used=11931 MiB
+DF4G vram at load: 11931 MiB
+DF4G identity vs greedy dump: 3 of 3 identical
+DF4G decode at 0: mean decode 84.6 tok/s
+DF4G decode at 16000: mean decode 57.1 tok/s
+DF4G acceptance: draft acceptance  : n=9 median 51.9 p10 45.2 p90 77.5 %   mean draft len n=9 median 3.0 p10 2.8 p90 4.1 pooled acceptance : 61.2 % (1829 / 2990 drafted tokens) 
+DF4G vram after: 11973 MiB
+=== product start 2026-10-06 14:34 engine f11c75618: inner health=1 vram=11459 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+=== done 14:34; product restored
+=== E22c dflash draft 3 with the 16k draft window 2026-10-06 14:35 engine f11c75618
+DF3W health=1 vram_used=11925 MiB
+DF3W vram at load: 11925 MiB
+DF3W identity vs greedy dump: 3 of 3 identical
+DF3W decode at 0: mean decode 86.3 tok/s
+DF3W decode at 16000: mean decode 77.9 tok/s
+DF3W acceptance: draft acceptance  : n=9 median 66.7 p10 57.9 p90 81.8 %   mean draft len n=9 median 3.0 p10 2.7 p90 3.5 pooled acceptance : 70.1 % (1748 / 2493 drafted tokens) 
+DF3W vram after: 11973 MiB
+=== product start 2026-10-06 14:39 engine f11c75618: inner health=1 vram=11459 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+=== done 14:39; product restored

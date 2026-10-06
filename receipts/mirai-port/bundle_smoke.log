@@ -18,3 +18,21 @@ stopped 1
 === product start 2026-10-06 11:28 engine a881e4277: inner health=1 vram=11459 MiB
 layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
 === done 11:28; product restored
+=== bundle smoke 2026-10-06 14:41 mirai-s-bundle-win-x64-20261006b.zip 520285394 bytes
+unzipped: 38 files; top: README.md bin layer start-server.ps1 suite templates tooling 
+health after 9 s: 1
+kv     tiered: cells 0..45312 in VRAM, 45312..262144 in system RAM (VRAM margin 800 MiB)
+spec   mtp draft 2 (2 past the VRAM line), draft window 16384
+listen 0.0.0.0:8080  think=True effort=medium budget=20480  harness-proofing=True  backend-sampling=True
+prefill ubatch 1024  mask=packed 1-bit  planes=ffn  level chunk 128 MiB
+api key created: yes
+SAME  divergence at char   650 of 650/650 | ref 40.1 tok/s | 79.9 tok/s (200 tok) prefill 364 | 'Write a Python function that parses an ISO 8601 '
+SAME  divergence at char   700 of 700/700 | ref 39.8 tok/s | 70.9 tok/s (131 tok) prefill 439 | 'Explain in five sentences why the sky is blue.'
+SAME  divergence at char    79 of 79/79 | ref 40.1 tok/s | 85.5 tok/s (75 tok) prefill 448 | 'List the first 20 prime numbers, comma separated'
+SAME  divergence at char   114 of 114/114 | ref 39.7 tok/s | 67.0 tok/s (36 tok) prefill 449 | 'Translate to French, then give the word count of'
+SAME  divergence at char   640 of 640/640 | ref 39.9 tok/s | 78.4 tok/s (200 tok) prefill 467 | 'A train leaves at 09:40 and arrives at 14:05 aft'
+vram: 11499 MiB
+stopped 1
+=== product start 2026-10-06 14:42 engine f11c75618: inner health=1 vram=11459 MiB
+layer health=1; serve left running (layer :8080, llama-server 127.0.0.1:18080)
+=== done 14:42; product restored
