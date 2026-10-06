@@ -197,7 +197,8 @@ tile about half as fast. `CMAKE_CUDA_ARCHITECTURES` is your GPU generation (86 =
 older cmake builds the kernels for every generation, which took 17 minutes here. A fresh clone of this branch was built that way
 and served through `start-server.sh` as a last check.
 `start-server.sh` is the raw server only: the same flags and environment as `start-server.ps1`, no layer, no automatic
-sizing of the VRAM line (set `MIRAI_KV_VRAM_CELLS` for your card). The knobs table above applies; it also reads
+sizing of the VRAM line (set `MIRAI_KV_VRAM_CELLS` for your card). The knobs table above applies, except
+`MIRAI_SPEC_TYPE`: it drafts with the GGUF's MTP block only, the DFlash mode is not wired on Linux. It also reads
 `MIRAI_HOST`, `MIRAI_API_KEY`, `MIRAI_MMPROJ` (images, encoder on the CPU) and `MIRAI_CVEC` (below).
 
 Measured on that Ubuntu box with the 12 GB recipe (44,000 positions in VRAM, the card at 300 W, PCIe 3.0 x16):

@@ -3,6 +3,8 @@
 2026-10-06, alesha-pro. One RTX 3090 (24 GB, power limit 300 W, PCIe 3.0 x16) held to the 12 GB recipe of this repo
 (`--kv-vram-cells 44000`), EPYC 7642, 128 GB RAM, Ubuntu 22.04.5, kernel 5.15, driver 610.43.02, CUDA 12.8 toolkit,
 gcc 11.4, cmake 3.22. Engine: `llama.cpp-ada-mirai` at 78c6a2ac7 plus the `--cvec-mode` commit, built for sm_86.
+Re-checked after the merge on engine main be00bbdc1 through `start-server.sh`: identity 5 of 5; with the vector 0 of 64,
+0 of 82, 0 of 32 ordinary, 1 of 24 with thinking on; decode 70.1 / 67.3 tok/s against 71.0 / 67.8 without it.
 Model: `Qwen3.8-27B-S-mirai.gguf`, sha256 5aa4365c... (equal to the Hugging Face LFS object).
 
 | file | what |
