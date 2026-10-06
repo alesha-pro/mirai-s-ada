@@ -189,8 +189,8 @@ MIRAI_KV_VRAM_CELLS=44000 ./start-server.sh             # raw server on http://1
 Point both CUDA paths at a CUDA 12 or 13 toolkit. On this box an older system `nvcc` was first on the PATH and the
 configure step failed without the compiler path; with a system cuBLAS 11 the int8 GEMM of the prompt path runs on a
 tile about half as fast. `CMAKE_CUDA_ARCHITECTURES` is your GPU generation (86 = RTX 30, 89 = RTX 40); without it an
-older cmake builds the kernels for every generation, which took 17 minutes here. A clone of this branch built and
-served with exactly these lines.
+older cmake builds the kernels for every generation, which took 17 minutes here. A fresh clone of this branch was built that way
+and served through `start-server.sh` as a last check.
 `start-server.sh` is the raw server only: the same flags and environment as `start-server.ps1`, no layer, no automatic
 sizing of the VRAM line (set `MIRAI_KV_VRAM_CELLS` for your card). The knobs table above applies; it also reads
 `MIRAI_HOST`, `MIRAI_API_KEY`, `MIRAI_MMPROJ` (images, encoder on the CPU) and `MIRAI_CVEC` (below).
